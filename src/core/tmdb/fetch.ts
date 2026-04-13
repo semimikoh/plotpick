@@ -32,6 +32,8 @@ export interface RawMovie {
   rating: number;
   posterUrl: string | null;
   country: "kr" | "intl";
+  cast?: string[];
+  director?: string;
 }
 
 async function fetchGenreMap(): Promise<Map<number, string>> {
@@ -139,4 +141,45 @@ export async function fetchAllMovies(options?: {
 
   console.log(`[tmdb] 총 ${all.length}편 (중복 제거)`);
   return all;
+}
+
+// 배우/감독 정보 보강
+async function fetchCredits(movieId: number): Promise<{ cast: string[]; director: string }> {
+  const res = await fetch(
+    `${API_BASE}/movie/${movieId}/credits?language=ko-KR`,
+    { headers: { Authorization: `Bearer ${getToken()}` } },
+  );
+
+  if (!res.ok) return { cast: [], director: "" };
+
+  const data = await res.json();
+
+  const cast = (data.cast ?? [])
+    .slice(0, 5)
+    .map((c: { name: string }) => c.name);
+
+  const director = (data.crew ?? [])
+    .find((c: { job: string }) => c.job === "Director")?.name ?? "";
+
+  return { cast, director };
+}
+
+export async function enrichMoviesWithCredits(movies: RawMovie[]): Promise<RawMovie[]> {
+  console.log(`[tmdb] ${movies.length}편 배우/감독 정보 수집 중...`);
+
+  for (let i = 0; i < movies.length; i++) {
+    const m = movies[i];
+    const { cast, director } = await fetchCredits(m.id);
+    m.cast = cast;
+    m.director = director;
+
+    if ((i + 1) % 100 === 0) {
+      console.log(`[tmdb] credits ${i + 1}/${movies.length}`);
+    }
+
+    await new Promise((r) => setTimeout(r, 25));
+  }
+
+  console.log("[tmdb] credits 수집 완료");
+  return movies;
 }

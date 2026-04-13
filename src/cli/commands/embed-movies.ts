@@ -9,10 +9,12 @@ export async function embedMoviesCommand() {
   const movies: RawMovie[] = JSON.parse(await readFile(rawPath, "utf-8"));
   console.log(`[embed-movies] ${movies.length}편 로드`);
 
-  // 임베딩용 텍스트
+  // 임베딩용 텍스트 (배우/감독 포함)
   const texts = movies.map((m) => {
     const parts = [`제목: ${m.title}`];
     if (m.genres.length > 0) parts.push(`장르: ${m.genres.join(", ")}`);
+    if (m.director) parts.push(`감독: ${m.director}`);
+    if (m.cast && m.cast.length > 0) parts.push(`출연: ${m.cast.join(", ")}`);
     if (m.releaseDate) parts.push(`개봉: ${m.releaseDate}`);
     parts.push(`설명: ${m.overview}`);
     return parts.join("\n");
