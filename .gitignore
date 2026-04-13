@@ -12,8 +12,11 @@ out/
 # build
 dist/
 
-# data (raw only)
+# data (raw sources)
 data/raw.json
+data/kakao_raw.csv
+data/naver_raw.csv
+data/naver_live.json
 
 # os
 .DS_Store
