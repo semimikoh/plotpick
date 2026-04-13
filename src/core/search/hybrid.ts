@@ -1,8 +1,10 @@
 import { searchWebtoons, type SearchResult } from "@/core/search/vector";
 import { searchByKeyword } from "@/core/search/keyword";
+import { getFeedbackBoosts } from "@/core/search/feedback";
 
 const RRF_K = 60;
 const TITLE_BOOST = 0.05;
+const FEEDBACK_BOOST = 0.03;
 
 function calcTitleBoost(title: string, query: string): number {
   const titleLower = title.toLowerCase();
@@ -22,10 +24,11 @@ export async function hybridSearch(
 ): Promise<SearchResult[]> {
   const count = options?.count ?? 10;
 
-  // 벡터 + 키워드 병렬 실행
-  const [vectorResults, keywordResults] = await Promise.all([
+  // 벡터 + 키워드 + 피드백 병렬 실행
+  const [vectorResults, keywordResults, feedbackBoosts] = await Promise.all([
     searchWebtoons(query, { count, genres: options?.genres }),
     searchByKeyword(query, { count, genres: options?.genres }),
+    getFeedbackBoosts(query),
   ]);
 
   // RRF (Reciprocal Rank Fusion) + 제목 부스트
@@ -49,6 +52,14 @@ export async function hybridSearch(
       score: (existing?.score ?? 0) + rrf + boost,
       result: existing?.result ?? { ...r, similarity: 0 },
     });
+  }
+
+  // 피드백 부스트 적용
+  for (const [id, count] of feedbackBoosts) {
+    const existing = scores.get(id);
+    if (existing) {
+      existing.score += FEEDBACK_BOOST * Math.min(count, 5);
+    }
   }
 
   // RRF 점수 기준 정렬, similarity에 정규화된 RRF 점수 반영
