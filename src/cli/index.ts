@@ -50,6 +50,22 @@ program
   });
 
 program
+  .command("fetch-movies")
+  .description("TMDB에서 한국 영화 수집")
+  .action(async () => {
+    const { fetchMoviesCommand } = await import("@/cli/commands/fetch-movies");
+    await fetchMoviesCommand();
+  });
+
+program
+  .command("embed-movies")
+  .description("영화 임베딩 + Supabase 적재")
+  .action(async () => {
+    const { embedMoviesCommand } = await import("@/cli/commands/embed-movies");
+    await embedMoviesCommand();
+  });
+
+program
   .command("enrich")
   .description("설명 부족한 작품에 LLM 키워드 보강")
   .action(async () => {

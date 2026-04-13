@@ -10,14 +10,38 @@ import { MessageList } from "@/components/chat/MessageList";
 import type { ChatMessage } from "@/components/chat/Message";
 import type { SearchResult } from "@/core/search/vector";
 
+type MediaType = "webtoon" | "movie";
+
 const PAGE_SIZE = 5;
+
+const MEDIA_CONFIG = {
+  webtoon: {
+    title: "PlotPick — 웹툰",
+    subtitle: "기억나는 장면이나 느낌을 말해보세요",
+    searchApi: "/api/search",
+    recommendApi: "/api/recommend",
+    feedbackApi: "/api/feedback",
+    placeholder: "어떤 웹툰을 찾고 있나요?",
+    examples: ['"힐링되는 일상물"', '"무서운 공포 웹툰"', '"학교 배경 로맨스"'],
+  },
+  movie: {
+    title: "PlotPick — 영화",
+    subtitle: "기억나는 장면이나 느낌을 말해보세요",
+    searchApi: "/api/search-movies",
+    recommendApi: "/api/recommend",
+    feedbackApi: "/api/feedback",
+    placeholder: "어떤 영화를 찾고 있나요?",
+    examples: ['"반전 있는 스릴러"', '"눈물나는 가족 영화"', '"좀비 나오는 한국 영화"'],
+  },
+};
 
 type SessionState =
   | { phase: "selecting"; query: string; allResults: SearchResult[]; page: number }
   | { phase: "refining"; query: string }
   | null;
 
-export function ChatContainer() {
+export function ChatContainer({ media = "webtoon" }: { media?: MediaType }) {
+  const config = MEDIA_CONFIG[media];
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [genres, setGenres] = useState<string[]>([]);
@@ -35,7 +59,7 @@ export function ChatContainer() {
     ]);
 
     try {
-      const res = await fetch("/api/recommend", {
+      const res = await fetch(config.recommendApi, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query, results }),
@@ -112,7 +136,7 @@ export function ChatContainer() {
 
     try {
       const currentGenres = genresRef.current;
-      const searchRes = await fetch("/api/search", {
+      const searchRes = await fetch(config.searchApi, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -228,7 +252,7 @@ export function ChatContainer() {
     );
 
     // 피드백 저장
-    fetch("/api/feedback", {
+    fetch(config.feedbackApi, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ query, webtoonId: webtoon.id }),
@@ -280,9 +304,9 @@ export function ChatContainer() {
     <Container size="sm" h="100vh" px={{ base: "xs", sm: "md" }}>
       <Stack h="100%" gap={0}>
         <Stack align="center" py="md" gap={4}>
-          <Title order={3}>PlotPick</Title>
+          <Title order={3}>{config.title}</Title>
           <Text size="sm" c="dimmed">
-            기억나는 장면이나 느낌을 말해보세요
+            {config.subtitle}
           </Text>
         </Stack>
 
@@ -290,9 +314,9 @@ export function ChatContainer() {
           <Center flex={1}>
             <Stack align="center" gap="xs">
               <Text size="lg" c="dimmed">검색 예시</Text>
-              <Text size="sm" c="dimmed">&quot;힐링되는 일상물&quot;</Text>
-              <Text size="sm" c="dimmed">&quot;무서운 공포 웹툰&quot;</Text>
-              <Text size="sm" c="dimmed">&quot;학교 배경 로맨스&quot;</Text>
+              {config.examples.map((ex) => (
+                <Text key={ex} size="sm" c="dimmed">{ex}</Text>
+              ))}
             </Stack>
           </Center>
         )}
