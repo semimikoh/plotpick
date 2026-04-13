@@ -41,4 +41,12 @@ program
     await embedCommand();
   });
 
+program
+  .command("search <query>")
+  .description("웹툰 의미 검색")
+  .action(async (query: string) => {
+    const { searchCommand } = await import("@/cli/commands/search");
+    await searchCommand(query);
+  });
+
 program.parse();
