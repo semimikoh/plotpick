@@ -2,7 +2,27 @@
 
 import { TextInput, ActionIcon, Group } from "@mantine/core";
 import { IconSearch } from "@tabler/icons-react";
-import { useState } from "react";
+import { useState, useRef, useCallback, memo } from "react";
+
+const SubmitButton = memo(function SubmitButton({
+  onClick,
+  loading,
+}: {
+  onClick: () => void;
+  loading: boolean;
+}) {
+  return (
+    <ActionIcon
+      size="lg"
+      variant="filled"
+      onClick={onClick}
+      loading={loading}
+      aria-label="검색"
+    >
+      <IconSearch size={18} />
+    </ActionIcon>
+  );
+});
 
 export function ChatInput({
   onSubmit,
@@ -12,13 +32,15 @@ export function ChatInput({
   loading: boolean;
 }) {
   const [value, setValue] = useState("");
+  const valueRef = useRef(value);
+  valueRef.current = value;
 
-  const handleSubmit = () => {
-    const trimmed = value.trim();
+  const handleSubmit = useCallback(() => {
+    const trimmed = valueRef.current.trim();
     if (!trimmed || loading) return;
     onSubmit(trimmed);
     setValue("");
-  };
+  }, [onSubmit, loading]);
 
   return (
     <Group gap="xs">
@@ -33,15 +55,7 @@ export function ChatInput({
         disabled={loading}
         autoFocus
       />
-      <ActionIcon
-        size="lg"
-        variant="filled"
-        onClick={handleSubmit}
-        loading={loading}
-        aria-label="검색"
-      >
-        <IconSearch size={18} />
-      </ActionIcon>
+      <SubmitButton onClick={handleSubmit} loading={loading} />
     </Group>
   );
 }

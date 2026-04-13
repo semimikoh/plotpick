@@ -1,9 +1,11 @@
 import { hybridSearch } from "@/core/search/hybrid";
 
-export async function searchCommand(query: string) {
-  console.log(`[search] "${query}" 하이브리드 검색 중...`);
+export async function searchCommand(query: string, genre?: string) {
+  const genres = genre ? genre.split(",").map((g) => g.trim()) : undefined;
+  const label = genres ? ` [장르: ${genres.join(", ")}]` : "";
+  console.log(`[search] "${query}"${label} 하이브리드 검색 중...`);
 
-  const results = await hybridSearch(query);
+  const results = await hybridSearch(query, { genres });
 
   if (results.length === 0) {
     console.log("[search] 결과 없음");

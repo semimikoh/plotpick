@@ -52,9 +52,10 @@ program
 program
   .command("search <query>")
   .description("웹툰 의미 검색")
-  .action(async (query: string) => {
+  .option("-g, --genre <genres>", "장르 필터 (쉼표 구분, 예: 공포,스릴러)")
+  .action(async (query: string, opts: { genre?: string }) => {
     const { searchCommand } = await import("@/cli/commands/search");
-    await searchCommand(query);
+    await searchCommand(query, opts.genre);
   });
 
 program.parse();

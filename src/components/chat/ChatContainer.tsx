@@ -1,7 +1,7 @@
 "use client";
 
 import { Stack, Title, Text, Center, Loader, Container, Paper } from "@mantine/core";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { GenreFilter } from "@/components/chat/GenreFilter";
 import { MessageList } from "@/components/chat/MessageList";
@@ -11,6 +11,8 @@ export function ChatContainer() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [genres, setGenres] = useState<string[]>([]);
+  const genresRef = useRef(genres);
+  genresRef.current = genres;
 
   const handleSubmit = useCallback(
     async (query: string) => {
@@ -24,13 +26,14 @@ export function ChatContainer() {
       setLoading(true);
 
       try {
+        const currentGenres = genresRef.current;
         const res = await fetch("/api/search", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             query,
             count: 5,
-            genres: genres.length > 0 ? genres : undefined,
+            genres: currentGenres.length > 0 ? currentGenres : undefined,
           }),
         });
 
@@ -63,7 +66,7 @@ export function ChatContainer() {
         setLoading(false);
       }
     },
-    [genres],
+    [],
   );
 
   return (

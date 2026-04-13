@@ -1,6 +1,21 @@
 import { searchWebtoons, type SearchResult } from "@/core/search/vector";
 import { searchByKeyword } from "@/core/search/keyword";
 
+const RRF_K = 60;
+const TITLE_BOOST = 0.05;
+
+function calcTitleBoost(title: string, query: string): number {
+  const titleLower = title.toLowerCase();
+  const queryLower = query.toLowerCase();
+  const words = queryLower.trim().split(/\s+/).filter((w) => w.length > 0);
+
+  if (words.length === 0) return 0;
+
+  // 제목에 매칭되는 단어 비율에 따라 부스트
+  const hits = words.filter((w) => titleLower.includes(w)).length;
+  return TITLE_BOOST * (hits / words.length);
+}
+
 export async function hybridSearch(
   query: string,
   options?: { count?: number; genres?: string[] },
@@ -13,24 +28,25 @@ export async function hybridSearch(
     searchByKeyword(query, { count, genres: options?.genres }),
   ]);
 
-  // RRF (Reciprocal Rank Fusion)
-  const K = 60; // RRF 상수
+  // RRF (Reciprocal Rank Fusion) + 제목 부스트
   const scores = new Map<string, { score: number; result: SearchResult }>();
 
   for (const [rank, r] of vectorResults.entries()) {
-    const rrf = 1 / (K + rank + 1);
+    const rrf = 1 / (RRF_K + rank + 1);
+    const boost = calcTitleBoost(r.title, query);
     const existing = scores.get(r.id);
     scores.set(r.id, {
-      score: (existing?.score ?? 0) + rrf,
+      score: (existing?.score ?? 0) + rrf + boost,
       result: existing?.result ?? r,
     });
   }
 
   for (const [rank, r] of keywordResults.entries()) {
-    const rrf = 1 / (K + rank + 1);
+    const rrf = 1 / (RRF_K + rank + 1);
+    const boost = calcTitleBoost(r.title, query);
     const existing = scores.get(r.id);
     scores.set(r.id, {
-      score: (existing?.score ?? 0) + rrf,
+      score: (existing?.score ?? 0) + rrf + boost,
       result: existing?.result ?? { ...r, similarity: 0 },
     });
   }
@@ -44,6 +60,6 @@ export async function hybridSearch(
 
   return sorted.map((s) => ({
     ...s.result,
-    similarity: s.score / maxScore, // 0~1 정규화
+    similarity: s.score / maxScore,
   }));
 }

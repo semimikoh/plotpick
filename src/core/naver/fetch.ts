@@ -41,7 +41,7 @@ async function fetchFinishedTitles(): Promise<NaverTitle[]> {
 
   while (true) {
     const res = await fetch(
-      `${API_BASE}/webtoon/titlelist/finish?order=user&page=${page}`,
+      `${API_BASE}/webtoon/titlelist/finished?order=user&page=${page}`,
       { headers: { "User-Agent": USER_AGENT } },
     );
 

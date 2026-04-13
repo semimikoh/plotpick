@@ -1,6 +1,7 @@
 "use client";
 
 import { MultiSelect } from "@mantine/core";
+import { memo } from "react";
 
 const GENRE_OPTIONS = [
   { value: "코미디 웹 만화", label: "코미디" },
@@ -15,7 +16,7 @@ const GENRE_OPTIONS = [
   { value: "블랙 코미디", label: "블랙 코미디" },
 ];
 
-export function GenreFilter({
+export const GenreFilter = memo(function GenreFilter({
   value,
   onChange,
 }: {
@@ -33,4 +34,4 @@ export function GenreFilter({
       searchable
     />
   );
-}
+});

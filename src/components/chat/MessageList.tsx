@@ -1,10 +1,10 @@
 "use client";
 
 import { Stack, ScrollArea } from "@mantine/core";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, memo } from "react";
 import { Message, type ChatMessage } from "@/components/chat/Message";
 
-export function MessageList({ messages }: { messages: ChatMessage[] }) {
+export const MessageList = memo(function MessageList({ messages }: { messages: ChatMessage[] }) {
   const viewport = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -23,4 +23,4 @@ export function MessageList({ messages }: { messages: ChatMessage[] }) {
       </Stack>
     </ScrollArea>
   );
-}
+});
