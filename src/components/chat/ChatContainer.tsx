@@ -3,59 +3,68 @@
 import { Stack, Title, Text, Center, Loader } from "@mantine/core";
 import { useState, useCallback } from "react";
 import { ChatInput } from "@/components/chat/ChatInput";
+import { GenreFilter } from "@/components/chat/GenreFilter";
 import { MessageList } from "@/components/chat/MessageList";
 import type { ChatMessage } from "@/components/chat/Message";
 
 export function ChatContainer() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
+  const [genres, setGenres] = useState<string[]>([]);
 
-  const handleSubmit = useCallback(async (query: string) => {
-    const userMsg: ChatMessage = {
-      id: `user-${Date.now()}`,
-      role: "user",
-      content: query,
-    };
+  const handleSubmit = useCallback(
+    async (query: string) => {
+      const userMsg: ChatMessage = {
+        id: `user-${Date.now()}`,
+        role: "user",
+        content: query,
+      };
 
-    setMessages((prev) => [...prev, userMsg]);
-    setLoading(true);
+      setMessages((prev) => [...prev, userMsg]);
+      setLoading(true);
 
-    try {
-      const res = await fetch("/api/search", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query, count: 5 }),
-      });
+      try {
+        const res = await fetch("/api/search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            query,
+            count: 5,
+            genres: genres.length > 0 ? genres : undefined,
+          }),
+        });
 
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+
+        const assistantMsg: ChatMessage = {
+          id: `assistant-${Date.now()}`,
+          role: "assistant",
+          content:
+            data.results?.length > 0
+              ? `"${query}"에 대해 ${data.results.length}개의 웹툰을 찾았습니다.`
+              : `"${query}"에 대한 검색 결과가 없습니다. 다른 키워드로 시도해보세요.`,
+          results: data.results ?? [],
+        };
+
+        setMessages((prev) => [...prev, assistantMsg]);
+      } catch (err) {
+        console.error("[search]", err);
+        const errorMsg: ChatMessage = {
+          id: `error-${Date.now()}`,
+          role: "assistant",
+          content: "검색 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
+        };
+        setMessages((prev) => [...prev, errorMsg]);
+      } finally {
+        setLoading(false);
       }
-
-      const data = await res.json();
-
-      const assistantMsg: ChatMessage = {
-        id: `assistant-${Date.now()}`,
-        role: "assistant",
-        content:
-          data.results?.length > 0
-            ? `"${query}"에 대해 ${data.results.length}개의 웹툰을 찾았습니다.`
-            : `"${query}"에 대한 검색 결과가 없습니다. 다른 키워드로 시도해보세요.`,
-        results: data.results ?? [],
-      };
-
-      setMessages((prev) => [...prev, assistantMsg]);
-    } catch (err) {
-      console.error("[search]", err);
-      const errorMsg: ChatMessage = {
-        id: `error-${Date.now()}`,
-        role: "assistant",
-        content: "검색 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
-      };
-      setMessages((prev) => [...prev, errorMsg]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    },
+    [genres],
+  );
 
   return (
     <Stack h="100vh" gap={0}>
@@ -87,7 +96,8 @@ export function ChatContainer() {
         </Center>
       )}
 
-      <Stack p="md">
+      <Stack p="md" gap="xs">
+        <GenreFilter value={genres} onChange={setGenres} />
         <ChatInput onSubmit={handleSubmit} loading={loading} />
       </Stack>
     </Stack>
