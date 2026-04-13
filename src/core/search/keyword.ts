@@ -4,8 +4,10 @@ import type { SearchResult } from "@/core/search/vector";
 function buildWordFilters(query: string): string {
   const words = query
     .trim()
+    .replace(/[,."'()[\]{}]/g, " ")
     .split(/\s+/)
-    .filter((w) => w.length > 0);
+    .filter((w) => w.length > 1)
+    .slice(0, 5);
 
   if (words.length === 0) {
     return "title.ilike.%%";
