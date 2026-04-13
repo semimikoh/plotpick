@@ -50,6 +50,14 @@ program
   });
 
 program
+  .command("enrich")
+  .description("설명 부족한 작품에 LLM 키워드 보강")
+  .action(async () => {
+    const { enrichCommand } = await import("@/cli/commands/enrich");
+    await enrichCommand();
+  });
+
+program
   .command("search <query>")
   .description("웹툰 의미 검색")
   .option("-g, --genre <genres>", "장르 필터 (쉼표 구분, 예: 공포,스릴러)")
