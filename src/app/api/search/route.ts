@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { hybridSearch } from "@/core/search/hybrid";
+import { inferGenres } from "@/core/llm/infer-genres";
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -12,7 +13,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const { query, genres, count } = body as Record<string, unknown>;
+  const { query, genres, count, autoGenre } = body as Record<string, unknown>;
 
   if (!query || typeof query !== "string") {
     return NextResponse.json(
@@ -28,15 +29,23 @@ export async function POST(request: Request) {
     );
   }
 
-  const safeGenres = Array.isArray(genres) ? genres : undefined;
+  let safeGenres = Array.isArray(genres) ? (genres as string[]) : undefined;
   const safeCount = typeof count === "number" ? Math.min(count, 20) : 10;
 
   try {
+    // LLM 장르 자동 추론 (유저 장르 없고 autoGenre가 true일 때)
+    let inferredGenres: string[] = [];
+    if (!safeGenres && autoGenre) {
+      inferredGenres = await inferGenres(query);
+      if (inferredGenres.length > 0) safeGenres = inferredGenres;
+    }
+
     const results = await hybridSearch(query, {
       count: safeCount,
       genres: safeGenres,
     });
-    return NextResponse.json({ results });
+
+    return NextResponse.json({ results, inferredGenres });
   } catch (err) {
     console.error("[api/search]", err);
     return NextResponse.json(
