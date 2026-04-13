@@ -1,9 +1,9 @@
-import { searchWebtoons } from "@/core/search/vector";
+import { hybridSearch } from "@/core/search/hybrid";
 
 export async function searchCommand(query: string) {
-  console.log(`[search] "${query}" 검색 중...`);
+  console.log(`[search] "${query}" 하이브리드 검색 중...`);
 
-  const results = await searchWebtoons(query);
+  const results = await hybridSearch(query);
 
   if (results.length === 0) {
     console.log("[search] 결과 없음");
