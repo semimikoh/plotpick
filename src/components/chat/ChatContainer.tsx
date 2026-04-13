@@ -1,6 +1,6 @@
 "use client";
 
-import { Stack, Title, Text } from "@mantine/core";
+import { Stack, Title, Text, Center, Loader } from "@mantine/core";
 import { useState, useCallback } from "react";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { MessageList } from "@/components/chat/MessageList";
@@ -27,6 +27,10 @@ export function ChatContainer() {
         body: JSON.stringify({ query, count: 5 }),
       });
 
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+
       const data = await res.json();
 
       const assistantMsg: ChatMessage = {
@@ -35,16 +39,17 @@ export function ChatContainer() {
         content:
           data.results?.length > 0
             ? `"${query}"에 대해 ${data.results.length}개의 웹툰을 찾았습니다.`
-            : "검색 결과가 없습니다.",
+            : `"${query}"에 대한 검색 결과가 없습니다. 다른 키워드로 시도해보세요.`,
         results: data.results ?? [],
       };
 
       setMessages((prev) => [...prev, assistantMsg]);
-    } catch {
+    } catch (err) {
+      console.error("[search]", err);
       const errorMsg: ChatMessage = {
         id: `error-${Date.now()}`,
         role: "assistant",
-        content: "검색 중 오류가 발생했습니다. 다시 시도해주세요.",
+        content: "검색 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
       };
       setMessages((prev) => [...prev, errorMsg]);
     } finally {
@@ -60,7 +65,28 @@ export function ChatContainer() {
           기억나는 장면이나 느낌을 말해보세요
         </Text>
       </Stack>
-      <MessageList messages={messages} />
+
+      {messages.length === 0 && !loading && (
+        <Center flex={1}>
+          <Stack align="center" gap="xs">
+            <Text size="lg" c="dimmed">
+              검색 예시
+            </Text>
+            <Text size="sm" c="dimmed">"힐링되는 일상물"</Text>
+            <Text size="sm" c="dimmed">"무서운 공포 웹툰"</Text>
+            <Text size="sm" c="dimmed">"학교 배경 로맨스"</Text>
+          </Stack>
+        </Center>
+      )}
+
+      {messages.length > 0 && <MessageList messages={messages} />}
+
+      {loading && (
+        <Center p="sm">
+          <Loader size="sm" />
+        </Center>
+      )}
+
       <Stack p="md">
         <ChatInput onSubmit={handleSubmit} loading={loading} />
       </Stack>

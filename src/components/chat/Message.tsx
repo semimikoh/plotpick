@@ -1,5 +1,6 @@
 import { Paper, Text } from "@mantine/core";
 import type { SearchResult } from "@/core/search/vector";
+import { RecommendationCards } from "@/components/recommendation/RecommendationCards";
 
 export type ChatMessage = {
   id: string;
@@ -16,28 +17,16 @@ export function Message({ message }: { message: ChatMessage }) {
       p="sm"
       radius="md"
       bg={isUser ? "blue.1" : "gray.0"}
-      maw="80%"
+      maw={isUser ? "80%" : "100%"}
       ml={isUser ? "auto" : undefined}
     >
       {message.content && (
-        <Text size="sm">{message.content}</Text>
+        <Text size="sm" mb={message.results?.length ? "sm" : 0}>
+          {message.content}
+        </Text>
       )}
       {message.results && message.results.length > 0 && (
-        <>
-          {message.results.map((r) => (
-            <Paper key={r.id} p="xs" mt="xs" withBorder radius="sm">
-              <Text size="sm" fw={600}>
-                {r.title}
-              </Text>
-              <Text size="xs" c="dimmed">
-                {r.platform} | {(r.similarity * 100).toFixed(1)}%
-              </Text>
-              <Text size="xs" mt={4} lineClamp={2}>
-                {r.description}
-              </Text>
-            </Paper>
-          ))}
-        </>
+        <RecommendationCards results={message.results} />
       )}
     </Paper>
   );
