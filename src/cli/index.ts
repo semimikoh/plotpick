@@ -42,6 +42,14 @@ program
   });
 
 program
+  .command("fetch-naver")
+  .description("네이버웹툰 현재 연재작 수집")
+  .action(async () => {
+    const { fetchNaverCommand } = await import("@/cli/commands/fetch-naver");
+    await fetchNaverCommand();
+  });
+
+program
   .command("search <query>")
   .description("웹툰 의미 검색")
   .action(async (query: string) => {

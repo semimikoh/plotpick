@@ -5,8 +5,10 @@ import {
   cleanWikiWebtoons,
   cleanKakaoCSV,
   cleanNaverCSV,
+  cleanNaverLive,
   mergeAll,
 } from "@/core/data/clean";
+import type { NaverWebtoon } from "@/core/naver/fetch";
 
 async function tryReadFile(path: string): Promise<string | null> {
   try {
@@ -43,6 +45,15 @@ export async function cleanCommand() {
     const naver = cleanNaverCSV(naverCsv);
     console.log(`[clean] 네이버: ${naver.length}편`);
     sources.push(naver);
+  }
+
+  // 4. 네이버 라이브
+  const naverLiveJson = await tryReadFile(resolve(dataDir, "naver_live.json"));
+  if (naverLiveJson) {
+    const naverLiveData: NaverWebtoon[] = JSON.parse(naverLiveJson);
+    const naverLive = cleanNaverLive(naverLiveData);
+    console.log(`[clean] 네이버 라이브: ${naverLive.length}편`);
+    sources.push(naverLive);
   }
 
   // 통합 머지 (제목 중복 제거)

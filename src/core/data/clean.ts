@@ -7,7 +7,7 @@ export interface CleanedWebtoon {
   url: string;
   genres: string[];
   platform: string;
-  source: "wikipedia" | "kakao-dataset" | "naver-dataset" | "curation";
+  source: "wikipedia" | "kakao-dataset" | "naver-dataset" | "naver-live" | "curation";
 }
 
 // --- 위키 정제 ---
@@ -159,6 +159,24 @@ export function cleanNaverCSV(csvContent: string): CleanedWebtoon[] {
   }
 
   return results;
+}
+
+// --- 네이버 라이브 데이터 정제 ---
+
+import type { NaverWebtoon } from "@/core/naver/fetch";
+
+export function cleanNaverLive(webtoons: NaverWebtoon[]): CleanedWebtoon[] {
+  return webtoons
+    .filter((w) => w.description.length >= 10)
+    .map((w) => ({
+      id: `naver-live-${w.titleId}`,
+      title: w.title,
+      description: cleanText(w.description),
+      url: w.url,
+      genres: w.genres,
+      platform: "naver",
+      source: "naver-live" as const,
+    }));
 }
 
 // --- CSV 파싱 유틸 ---
