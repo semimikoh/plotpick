@@ -14,6 +14,12 @@ importers:
       '@mantine/hooks':
         specifier: ^9.0.1
         version: 9.0.1(react@19.2.5)
+      commander:
+        specifier: ^14.0.3
+        version: 14.0.3
+      dotenv:
+        specifier: ^17.4.2
+        version: 17.4.2
       next:
         specifier: ^16.2.3
         version: 16.2.3(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
@@ -484,6 +490,10 @@ packages:
     resolution: {integrity: sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA==}
     engines: {node: '>=6'}
 
+  commander@14.0.3:
+    resolution: {integrity: sha512-H+y0Jo/T1RZ9qPP4Eh1pkcQcLRglraJaSLoyOtHxu6AapkjWVCy2Sit1QQ4x3Dng8qDlSsZEet7g5Pq06MvTgw==}
+    engines: {node: '>=20'}
+
   cssesc@3.0.0:
     resolution: {integrity: sha512-/Tb/JcjK111nNScGob5MNtsntNM1aCNUDipB/TkwZFhyDrrE47SOx/18wF2bbjgc3ZzCSKW1T5nt5EbFoAz/Vg==}
     engines: {node: '>=4'}
@@ -498,6 +508,10 @@ packages:
 
   detect-node-es@1.1.0:
     resolution: {integrity: sha512-ypdmJU/TbBby2Dxibuv7ZLW3Bs1QEmM7nHjEANfohJLvE0XVujisn1qPJcZxg+qDucsr+bP6fLD1rPS3AhJ7EQ==}
+
+  dotenv@17.4.2:
+    resolution: {integrity: sha512-nI4U3TottKAcAD9LLud4Cb7b2QztQMUEfHbvhTH09bqXTxnSie8WnjPALV/WMCrJZ6UV/qHJ6L03OqO3LcdYZw==}
+    engines: {node: '>=12'}
 
   esbuild@0.27.7:
     resolution: {integrity: sha512-IxpibTjyVnmrIQo5aqNpCgoACA/dTKLTlhMHihVHhdkxKyPO1uBBthumT0rdHmcsk9uMonIWS0m4FljWzILh3w==}
@@ -1012,6 +1026,8 @@ snapshots:
 
   clsx@2.1.1: {}
 
+  commander@14.0.3: {}
+
   cssesc@3.0.0: {}
 
   csstype@3.2.3: {}
@@ -1020,6 +1036,8 @@ snapshots:
     optional: true
 
   detect-node-es@1.1.0: {}
+
+  dotenv@17.4.2: {}
 
   esbuild@0.27.7:
     optionalDependencies:
