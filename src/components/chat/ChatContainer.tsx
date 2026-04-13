@@ -1,6 +1,6 @@
 "use client";
 
-import { Stack, Title, Text, Center, Loader } from "@mantine/core";
+import { Stack, Title, Text, Center, Loader, Container, Paper } from "@mantine/core";
 import { useState, useCallback } from "react";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { GenreFilter } from "@/components/chat/GenreFilter";
@@ -67,39 +67,43 @@ export function ChatContainer() {
   );
 
   return (
-    <Stack h="100vh" gap={0}>
-      <Stack align="center" p="md" gap={4}>
-        <Title order={3}>PlotPick</Title>
-        <Text size="sm" c="dimmed">
-          기억나는 장면이나 느낌을 말해보세요
-        </Text>
-      </Stack>
+    <Container size="sm" h="100vh" px={{ base: "xs", sm: "md" }}>
+      <Stack h="100%" gap={0}>
+        <Stack align="center" py="md" gap={4}>
+          <Title order={3}>PlotPick</Title>
+          <Text size="sm" c="dimmed">
+            기억나는 장면이나 느낌을 말해보세요
+          </Text>
+        </Stack>
 
-      {messages.length === 0 && !loading && (
-        <Center flex={1}>
-          <Stack align="center" gap="xs">
-            <Text size="lg" c="dimmed">
-              검색 예시
-            </Text>
-            <Text size="sm" c="dimmed">"힐링되는 일상물"</Text>
-            <Text size="sm" c="dimmed">"무서운 공포 웹툰"</Text>
-            <Text size="sm" c="dimmed">"학교 배경 로맨스"</Text>
+        {messages.length === 0 && !loading && (
+          <Center flex={1}>
+            <Stack align="center" gap="xs">
+              <Text size="lg" c="dimmed">
+                검색 예시
+              </Text>
+              <Text size="sm" c="dimmed">&quot;힐링되는 일상물&quot;</Text>
+              <Text size="sm" c="dimmed">&quot;무서운 공포 웹툰&quot;</Text>
+              <Text size="sm" c="dimmed">&quot;학교 배경 로맨스&quot;</Text>
+            </Stack>
+          </Center>
+        )}
+
+        {messages.length > 0 && <MessageList messages={messages} />}
+
+        {loading && (
+          <Center p="sm">
+            <Loader size="sm" />
+          </Center>
+        )}
+
+        <Paper py="md">
+          <Stack gap="xs">
+            <GenreFilter value={genres} onChange={setGenres} />
+            <ChatInput onSubmit={handleSubmit} loading={loading} />
           </Stack>
-        </Center>
-      )}
-
-      {messages.length > 0 && <MessageList messages={messages} />}
-
-      {loading && (
-        <Center p="sm">
-          <Loader size="sm" />
-        </Center>
-      )}
-
-      <Stack p="md" gap="xs">
-        <GenreFilter value={genres} onChange={setGenres} />
-        <ChatInput onSubmit={handleSubmit} loading={loading} />
+        </Paper>
       </Stack>
-    </Stack>
+    </Container>
   );
 }
