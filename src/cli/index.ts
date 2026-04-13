@@ -1,4 +1,5 @@
-import "dotenv/config";
+import { config } from "dotenv";
+config({ path: ".env.local" });
 import { Command } from "commander";
 
 const program = new Command();
@@ -22,6 +23,22 @@ program
   .action(async () => {
     const { cleanCommand } = await import("@/cli/commands/clean");
     await cleanCommand();
+  });
+
+program
+  .command("db-test")
+  .description("Supabase 연결 테스트")
+  .action(async () => {
+    const { dbTestCommand } = await import("@/cli/commands/db-test");
+    await dbTestCommand();
+  });
+
+program
+  .command("embed")
+  .description("cleaned.json 임베딩 + Supabase 적재")
+  .action(async () => {
+    const { embedCommand } = await import("@/cli/commands/embed");
+    await embedCommand();
   });
 
 program.parse();
