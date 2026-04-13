@@ -11,10 +11,13 @@ export async function embedCommand() {
   );
   console.log(`[embed] cleaned.json: ${webtoons.length}편 로드`);
 
-  // 임베딩용 텍스트: 제목 + 장르 + 설명을 하나로 합침
+  // 임베딩용 텍스트: 구조화된 포맷으로 검색 품질 향상
   const texts = webtoons.map((w) => {
-    const genreStr = w.genres.length > 0 ? `[${w.genres.join(", ")}] ` : "";
-    return `${w.title} ${genreStr}${w.description}`;
+    const parts = [`제목: ${w.title}`];
+    if (w.platform !== "unknown") parts.push(`플랫폼: ${w.platform}`);
+    if (w.genres.length > 0) parts.push(`장르: ${w.genres.join(", ")}`);
+    parts.push(`설명: ${w.description}`);
+    return parts.join("\n");
   });
 
   console.log("[embed] OpenAI 임베딩 시작...");
