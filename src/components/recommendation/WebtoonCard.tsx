@@ -16,12 +16,31 @@ function similarityColor(score: number): string {
   return "gray";
 }
 
-export function WebtoonCard({ webtoon }: { webtoon: SearchResult }) {
+export function WebtoonCard({
+  webtoon,
+  onSelect,
+  selected,
+}: {
+  webtoon: SearchResult;
+  onSelect?: (webtoon: SearchResult) => void;
+  selected?: boolean;
+}) {
   const score = (webtoon.similarity * 100).toFixed(1);
   const color = similarityColor(webtoon.similarity);
 
   return (
-    <Card withBorder radius="md" p="sm">
+    <Card
+      withBorder
+      radius="md"
+      p="sm"
+      style={{
+        cursor: onSelect ? "pointer" : undefined,
+        borderColor: selected ? "var(--mantine-color-blue-5)" : undefined,
+        borderWidth: selected ? 2 : undefined,
+        opacity: selected === false ? 0.5 : 1,
+      }}
+      onClick={() => onSelect?.(webtoon)}
+    >
       <Stack gap="xs">
         <Group justify="space-between" align="flex-start">
           <Text size="sm" fw={600} style={{ flex: 1 }}>
@@ -54,7 +73,12 @@ export function WebtoonCard({ webtoon }: { webtoon: SearchResult }) {
           {webtoon.description}
         </Text>
 
-        <Anchor href={webtoon.url} target="_blank" size="xs">
+        <Anchor
+          href={webtoon.url}
+          target="_blank"
+          size="xs"
+          onClick={(e) => e.stopPropagation()}
+        >
           위키백과
         </Anchor>
       </Stack>

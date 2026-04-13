@@ -1,4 +1,5 @@
-import { Paper, Text } from "@mantine/core";
+import { Paper, Text, Box } from "@mantine/core";
+import Markdown from "react-markdown";
 import type { SearchResult } from "@/core/search/vector";
 import { RecommendationCards } from "@/components/recommendation/RecommendationCards";
 
@@ -7,6 +8,9 @@ export type ChatMessage = {
   role: "user" | "assistant";
   content: string;
   results?: SearchResult[];
+  selectable?: boolean;
+  selectedId?: string | null;
+  onSelect?: (webtoon: SearchResult) => void;
 };
 
 export function Message({ message }: { message: ChatMessage }) {
@@ -20,13 +24,20 @@ export function Message({ message }: { message: ChatMessage }) {
       maw={isUser ? "80%" : "100%"}
       ml={isUser ? "auto" : undefined}
     >
-      {message.content && (
-        <Text size="sm" mb={message.results?.length ? "sm" : 0}>
-          {message.content}
-        </Text>
+      {message.content && isUser && (
+        <Text size="sm">{message.content}</Text>
+      )}
+      {message.content && !isUser && (
+        <Box fz="sm" mb={message.results?.length ? "sm" : 0}>
+          <Markdown>{message.content}</Markdown>
+        </Box>
       )}
       {message.results && message.results.length > 0 && (
-        <RecommendationCards results={message.results} />
+        <RecommendationCards
+          results={message.results}
+          onSelect={message.selectable ? message.onSelect : undefined}
+          selectedId={message.selectedId}
+        />
       )}
     </Paper>
   );
