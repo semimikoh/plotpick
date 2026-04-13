@@ -1,0 +1,27 @@
+# dependencies
+node_modules/
+
+# env
+.env.local
+.env*.local
+
+# next.js
+.next/
+out/
+
+# build
+dist/
+
+# data (raw only)
+data/raw.json
+
+# os
+.DS_Store
+
+# editor
+.vscode/
+*.swp
+
+# claude code
+CLAUDE.md
+docs/
