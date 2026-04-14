@@ -397,7 +397,7 @@ export function ChatContainer({ media = "movie" }: { media?: MediaType }) {
   const isDone = session?.phase === "done";
 
   return (
-    <Container size="sm" h="100vh" px={{ base: "xs", sm: "md" }}>
+    <Container size="sm" h="100dvh" px={{ base: "xs", sm: "md" }}>
       <Stack h="100%" gap={0}>
         <Stack align="center" py="md" gap={4}>
           <Title order={3}>{config.title}</Title>
@@ -424,23 +424,25 @@ export function ChatContainer({ media = "movie" }: { media?: MediaType }) {
           />
         )}
 
-        {genreConfirmed && messages.length === 0 && !loading && (
-          <Center flex={1}>
-            <Stack align="center" gap="xs">
-              <Text size="lg" c="gray.6">검색 예시</Text>
-              {config.examples.map((ex) => (
-                <Text key={ex} size="sm" c="gray.6">{ex}</Text>
-              ))}
-            </Stack>
+        {loading ? (
+          <Center flex={1} aria-live="polite" aria-label="검색 중">
+            <Loader size="lg" />
           </Center>
-        )}
+        ) : (
+          <>
+            {genreConfirmed && messages.length === 0 && (
+              <Center flex={1}>
+                <Stack align="center" gap="xs">
+                  <Text size="lg" c="gray.6">검색 예시</Text>
+                  {config.examples.map((ex) => (
+                    <Text key={ex} size="sm" c="gray.6">{ex}</Text>
+                  ))}
+                </Stack>
+              </Center>
+            )}
 
-        {messages.length > 0 && <MessageList messages={messagesWithHandlers} />}
-
-        {loading && (
-          <Center p="sm" aria-live="polite" aria-label="검색 중">
-            <Loader size="sm" />
-          </Center>
+            {messages.length > 0 && <MessageList messages={messagesWithHandlers} />}
+          </>
         )}
 
         {isSelecting && !loading && (
