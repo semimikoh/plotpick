@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 
-const MODEL = "text-embedding-3-small";
+const MODEL = "text-embedding-3-large";
 const BATCH_SIZE = 100;
 
 function getClient(): OpenAI {
@@ -24,6 +24,7 @@ export async function embedTexts(texts: string[]): Promise<number[][]> {
     const res = await client.embeddings.create({
       model: MODEL,
       input: batch,
+      dimensions: 1536,
     });
 
     for (const item of res.data) {

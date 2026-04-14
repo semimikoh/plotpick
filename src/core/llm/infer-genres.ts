@@ -21,7 +21,8 @@ export async function inferGenres(query: string): Promise<string[]> {
 사용 가능한 장르: ${AVAILABLE_GENRES.join(", ")}
 
 규칙:
-- 검색어가 특정 장르를 암시하면 해당 장르를 반환
+- 검색어가 명시적으로 장르를 언급할 때만 반환 (예: "스릴러 웹툰", "로맨스 추천", "힐링물")
+- 줄거리 묘사나 장면 설명이면 빈 배열 반환 (장르를 추측하지 말 것)
 - 확실하지 않으면 빈 배열 반환 (필터 없이 전체 검색)
 - 최대 2개까지만
 - "힐링", "따뜻한" → 일상
@@ -29,6 +30,7 @@ export async function inferGenres(query: string): Promise<string[]> {
 - "회귀", "전생", "환생" → 판타지
 - "싸움", "격투" → 액션
 - "연애", "설렘" → 로맨스
+- "학교에서 ~한 일" 같은 줄거리 묘사는 장르 추론 금지 → 빈 배열
 
 검색어: "${query}"`,
     });

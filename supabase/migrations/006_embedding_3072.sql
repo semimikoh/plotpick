@@ -1,0 +1,3 @@
+-- 임베딩 모델 변경: text-embedding-3-small → text-embedding-3-large (1536차원 축소)
+-- 차원은 동일하므로 스키마 변경 불필요. 기존 임베딩만 재생성 필요.
+-- pnpm cli embed && pnpm cli embed-movies 실행할 것.

@@ -38,6 +38,8 @@ export async function embedMoviesCommand() {
       rating: m.rating,
       release_date: m.releaseDate,
       poster_url: m.posterUrl,
+      cast_members: m.cast ?? [],
+      director: m.director ?? "",
       embedding: JSON.stringify(embeddings[i + j]),
     }));
 

@@ -10,6 +10,8 @@ export interface MovieSearchResult {
   rating: number;
   release_date: string;
   poster_url: string | null;
+  cast_members: string[];
+  director: string;
   similarity: number;
 }
 

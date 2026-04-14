@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { hybridMovieSearch } from "@/core/search/movie-hybrid";
-import { inferGenres } from "@/core/llm/infer-genres";
+import { inferMovieGenres } from "@/core/llm/infer-movie-genres";
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -26,7 +26,7 @@ export async function POST(request: Request) {
   try {
     let inferredGenres: string[] = [];
     if (!safeGenres && autoGenre) {
-      inferredGenres = await inferGenres(query);
+      inferredGenres = await inferMovieGenres(query);
       if (inferredGenres.length > 0) safeGenres = inferredGenres;
     }
 
@@ -38,6 +38,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ results, inferredGenres });
   } catch (err) {
     console.error("[api/search-movies]", err);
-    return NextResponse.json({ error: "검색 오류" }, { status: 500 });
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: "검색 오류", detail: msg }, { status: 500 });
   }
 }

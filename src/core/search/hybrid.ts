@@ -5,6 +5,7 @@ import { getFeedbackBoosts } from "@/core/search/feedback";
 const RRF_K = 60;
 const TITLE_BOOST = 0.05;
 const FEEDBACK_BOOST = 0.03;
+const MIN_DISPLAY_SCORE = 0.25;
 
 function calcTitleBoost(title: string, query: string): number {
   const titleLower = title.toLowerCase();
@@ -13,9 +14,25 @@ function calcTitleBoost(title: string, query: string): number {
 
   if (words.length === 0) return 0;
 
-  // 제목에 매칭되는 단어 비율에 따라 부스트
   const hits = words.filter((w) => titleLower.includes(w)).length;
   return TITLE_BOOST * (hits / words.length);
+}
+
+function calcTitleMatchRatio(title: string, query: string): number {
+  const titleLower = title.toLowerCase().replace(/[:\-\s]+/g, "");
+  const queryLower = query.toLowerCase().replace(/[:\-\s]+/g, "");
+  if (titleLower === queryLower || queryLower === titleLower) return 1;
+  if (titleLower.includes(queryLower) || queryLower.includes(titleLower)) return 0.8;
+  const words = query.trim().split(/\s+/).filter((w) => w.length > 1);
+  if (words.length === 0) return 0;
+  const hits = words.filter((w) => titleLower.includes(w.toLowerCase())).length;
+  return hits / words.length * 0.5;
+}
+
+function scaleScore(rawSim: number, titleMatch: number): number {
+  const boosted = rawSim + titleMatch * 0.4;
+  const scaled = (boosted - 0.25) / 0.45;
+  return Math.min(1, Math.max(0, scaled));
 }
 
 export async function hybridSearch(
@@ -24,12 +41,17 @@ export async function hybridSearch(
 ): Promise<SearchResult[]> {
   const count = options?.count ?? 10;
 
-  // 벡터 + 키워드 + 피드백 병렬 실행
   const [vectorResults, keywordResults, feedbackBoosts] = await Promise.all([
     searchWebtoons(query, { count, genres: options?.genres }),
     searchByKeyword(query, { count, genres: options?.genres }),
     getFeedbackBoosts(query),
   ]);
+
+  // 벡터 검색의 절대 유사도를 보존
+  const vectorSimilarities = new Map<string, number>();
+  for (const r of vectorResults) {
+    vectorSimilarities.set(r.id, r.similarity);
+  }
 
   // RRF (Reciprocal Rank Fusion) + 제목 부스트
   const scores = new Map<string, { score: number; result: SearchResult }>();
@@ -62,15 +84,16 @@ export async function hybridSearch(
     }
   }
 
-  // RRF 점수 기준 정렬, similarity에 정규화된 RRF 점수 반영
   const sorted = [...scores.values()]
     .sort((a, b) => b.score - a.score)
     .slice(0, count);
 
-  const maxScore = sorted[0]?.score ?? 1;
+  const results = sorted.map((s) => {
+    const absSim = vectorSimilarities.get(s.result.id) ?? 0.3;
+    const titleMatch = calcTitleMatchRatio(s.result.title, query);
+    const similarity = scaleScore(absSim, titleMatch);
+    return { ...s.result, similarity };
+  });
 
-  return sorted.map((s) => ({
-    ...s.result,
-    similarity: s.score / maxScore,
-  }));
+  return results.filter((r) => r.similarity >= MIN_DISPLAY_SCORE);
 }
