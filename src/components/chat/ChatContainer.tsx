@@ -5,7 +5,6 @@ import {
 } from "@mantine/core";
 import { useState, useCallback, useRef } from "react";
 import { ChatInput } from "@/components/chat/ChatInput";
-import { GenreFilter } from "@/components/chat/GenreFilter";
 import { MessageList } from "@/components/chat/MessageList";
 import type { ChatMessage } from "@/components/chat/Message";
 import type { SearchResult } from "@/core/search/vector";
@@ -23,6 +22,22 @@ const MEDIA_CONFIG = {
     feedbackApi: "/api/feedback",
     placeholder: "어떤 웹툰을 찾고 있나요?",
     examples: ['"힐링되는 일상물"', '"무서운 공포 웹툰"', '"학교 배경 로맨스"'],
+    genres: [
+      "코미디", "액션", "로맨스", "공포", "무협",
+      "일상", "학원", "판타지", "드라마", "스릴러",
+    ],
+    genreMap: {
+      "코미디": "코미디 웹 만화",
+      "액션": "액션 만화",
+      "로맨스": "로맨스 웹 만화",
+      "공포": "공포 웹 만화",
+      "무협": "무협 만화",
+      "일상": "일상물 웹 만화",
+      "학원": "고등학교를 배경으로 한 만화",
+      "판타지": "판타지",
+      "드라마": "드라마",
+      "스릴러": "스릴러",
+    } as Record<string, string>,
   },
   movie: {
     title: "PlotPick — 영화",
@@ -32,32 +47,52 @@ const MEDIA_CONFIG = {
     feedbackApi: "/api/feedback",
     placeholder: "어떤 영화를 찾고 있나요?",
     examples: ['"반전 있는 스릴러"', '"눈물나는 가족 영화"', '"좀비 나오는 한국 영화"'],
+    genres: [
+      "액션", "모험", "코미디", "범죄", "드라마",
+      "가족", "판타지", "공포", "미스터리", "로맨스",
+      "SF", "스릴러", "전쟁", "애니메이션",
+    ],
+    genreMap: null,
   },
 };
 
 type SessionState =
   | { phase: "selecting"; query: string; allResults: SearchResult[]; page: number }
   | { phase: "refining"; query: string }
+  | { phase: "done" }
   | null;
 
 export function ChatContainer({ media = "webtoon" }: { media?: MediaType }) {
   const config = MEDIA_CONFIG[media];
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
-  const [genres, setGenres] = useState<string[]>([]);
-  const genresRef = useRef(genres);
-  genresRef.current = genres;
+  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+  const selectedGenresRef = useRef<string[]>([]);
+  const [genreConfirmed, setGenreConfirmed] = useState(false);
   const sessionRef = useRef<SessionState>(null);
   const [, forceUpdate] = useState(0);
 
-  // LLM 스트리밍 헬퍼
-  const streamLLM = useCallback(async (query: string, results: SearchResult[]) => {
-    const llmId = `llm-${Date.now()}`;
-    setMessages((prev) => [
-      ...prev,
-      { id: llmId, role: "assistant", content: "" },
-    ]);
+  const handleGenreClick = useCallback((genre: string) => {
+    setSelectedGenres((prev) => {
+      const next = prev.includes(genre)
+        ? prev.filter((g) => g !== genre)
+        : [...prev, genre];
+      selectedGenresRef.current = next;
+      return next;
+    });
+  }, []);
 
+  const handleGenreClear = useCallback(() => {
+    setSelectedGenres([]);
+    selectedGenresRef.current = [];
+  }, []);
+
+  const handleGenreConfirm = useCallback(() => {
+    setGenreConfirmed(true);
+  }, []);
+
+  // LLM 응답 가져오기 (완성 후 한 번에 표시)
+  const fetchLLM = useCallback(async (query: string, results: SearchResult[]): Promise<string> => {
     try {
       const res = await fetch(config.recommendApi, {
         method: "POST",
@@ -74,20 +109,14 @@ export function ChatContainer({ media = "webtoon" }: { media?: MediaType }) {
           const { done, value } = await reader.read();
           if (done) break;
           text += decoder.decode(value, { stream: true });
-          const current = text;
-          setMessages((prev) =>
-            prev.map((m) => (m.id === llmId ? { ...m, content: current } : m)),
-          );
         }
+        return text;
       }
     } catch {
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === llmId ? { ...m, content: "답변을 생성하지 못했습니다." } : m,
-        ),
-      );
+      // 무시
     }
-  }, []);
+    return "";
+  }, [config.recommendApi]);
 
   // 카드 페이지 보여주기
   const showPage = useCallback((session: Extract<SessionState, { phase: "selecting" }>) => {
@@ -117,7 +146,7 @@ export function ChatContainer({ media = "webtoon" }: { media?: MediaType }) {
         id: `cards-${Date.now()}`,
         role: "assistant",
         content: pageNum === 1
-          ? "이 중에 찾는 웹툰이 있나요?"
+          ? "이 중에 찾는 작품이 있나요?"
           : `다음 결과입니다. (${pageNum}/${total})`,
         results: pageResults,
         selectable: true,
@@ -135,15 +164,18 @@ export function ChatContainer({ media = "webtoon" }: { media?: MediaType }) {
     setLoading(true);
 
     try {
-      const currentGenres = genresRef.current;
+      const apiGenres: string[] = selectedGenresRef.current.map((g) => {
+        const mapped = config.genreMap?.[g];
+        return mapped ?? g;
+      });
+
       const searchRes = await fetch(config.searchApi, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           query,
           count: 20,
-          genres: currentGenres.length > 0 ? currentGenres : undefined,
-          autoGenre: currentGenres.length === 0,
+          genres: apiGenres.length > 0 ? apiGenres : undefined,
         }),
       });
 
@@ -170,25 +202,37 @@ export function ChatContainer({ media = "webtoon" }: { media?: MediaType }) {
         return;
       }
 
-      // LLM 분석 스트리밍
+      // LLM 분석 + 카드를 하나의 메시지로 (타이핑 후 카드 표시)
       const topResults = results.slice(0, PAGE_SIZE);
-      await streamLLM(query, topResults);
+      const llmText = await fetchLLM(query, topResults);
 
       // shown ID 추가
-      for (const r of results.slice(0, PAGE_SIZE)) {
+      for (const r of topResults) {
         shownIdsRef.current.add(r.id);
       }
 
-      // 세션 시작 + 첫 페이지 카드
+      // 세션 시작
       const session: Extract<SessionState, { phase: "selecting" }> = {
         phase: "selecting",
         query,
         allResults: results,
-        page: 0,
+        page: 1, // 첫 페이지는 여기서 보여줌
       };
       sessionRef.current = session;
       forceUpdate((n) => n + 1);
-      showPage(session);
+
+      // LLM 텍스트 + 카드를 하나의 메시지로
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `result-${Date.now()}`,
+          role: "assistant",
+          content: llmText || "이 중에 찾는 작품이 있나요?",
+          typing: !!llmText,
+          results: topResults,
+          selectable: true,
+        },
+      ]);
     } catch (err) {
       console.error("[chat]", err);
       setMessages((prev) => [
@@ -204,13 +248,13 @@ export function ChatContainer({ media = "webtoon" }: { media?: MediaType }) {
     } finally {
       setLoading(false);
     }
-  }, [streamLLM, showPage]);
+  }, [fetchLLM, showPage, config.searchApi, config.genreMap]);
 
   // 새 검색
   const handleSubmit = useCallback(async (input: string) => {
     const session = sessionRef.current;
 
-    // 정제 모드: 추가 답변 + 원래 검색어 합쳐서 재검색 (이전 결과 제외)
+    // 정제 모드
     if (session?.phase === "refining") {
       const combinedQuery = `${session.query} ${input}`;
 
@@ -225,7 +269,7 @@ export function ChatContainer({ media = "webtoon" }: { media?: MediaType }) {
       return;
     }
 
-    // 일반 검색 (shown IDs 리셋)
+    // 일반 검색
     sessionRef.current = null;
     shownIdsRef.current = new Set();
     setMessages((prev) => [
@@ -244,14 +288,12 @@ export function ChatContainer({ media = "webtoon" }: { media?: MediaType }) {
     sessionRef.current = null;
     forceUpdate((n) => n + 1);
 
-    // 선택 표시
     setMessages((prev) =>
       prev.map((m) =>
         m.selectable ? { ...m, selectable: false, selectedId: webtoon.id } : m,
       ),
     );
 
-    // 피드백 저장
     fetch(config.feedbackApi, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -263,12 +305,23 @@ export function ChatContainer({ media = "webtoon" }: { media?: MediaType }) {
       {
         id: `found-${Date.now()}`,
         role: "assistant",
-        content: `**${webtoon.title}** 찾으셨군요! 기억해둘게요.`,
+        content: `**${webtoon.title}** 찾으셨군요!`,
       },
     ]);
-  }, [streamLLM]);
 
-  // "없어요" → 바로 정제 모드
+    sessionRef.current = { phase: "done" };
+    forceUpdate((n) => n + 1);
+  }, [config.feedbackApi]);
+
+  // 다시 검색하기
+  const handleReset = useCallback(() => {
+    setMessages([]);
+    sessionRef.current = null;
+    shownIdsRef.current = new Set();
+    forceUpdate((n) => n + 1);
+  }, []);
+
+  // "없어요"
   const handleNotFound = useCallback(() => {
     const session = sessionRef.current;
     if (session?.phase !== "selecting") return;
@@ -276,7 +329,6 @@ export function ChatContainer({ media = "webtoon" }: { media?: MediaType }) {
     sessionRef.current = { phase: "refining", query: session.query };
     forceUpdate((n) => n + 1);
 
-    // 선택 불가로 변경
     setMessages((prev) =>
       prev.map((m) => (m.selectable ? { ...m, selectable: false } : m)),
     );
@@ -291,7 +343,6 @@ export function ChatContainer({ media = "webtoon" }: { media?: MediaType }) {
     ]);
   }, []);
 
-  // 메시지에 핸들러 주입
   const messagesWithHandlers = messages.map((m) =>
     m.selectable ? { ...m, onSelect: handleSelect } : m,
   );
@@ -299,6 +350,7 @@ export function ChatContainer({ media = "webtoon" }: { media?: MediaType }) {
   const session = sessionRef.current;
   const isSelecting = session?.phase === "selecting";
   const isRefining = session?.phase === "refining";
+  const isDone = session?.phase === "done";
 
   return (
     <Container size="sm" h="100vh" px={{ base: "xs", sm: "md" }}>
@@ -310,7 +362,75 @@ export function ChatContainer({ media = "webtoon" }: { media?: MediaType }) {
           </Text>
         </Stack>
 
-        {messages.length === 0 && !loading && (
+        {/* 장르 미선택 + 대화 없음: 장르 선택 화면 */}
+        {!genreConfirmed && messages.length === 0 && (
+          <Center flex={1}>
+            <Stack align="center" gap="lg" maw={400}>
+              <Stack align="center" gap={4}>
+                <Text size="lg" fw={600}>장르를 먼저 선택해 주세요</Text>
+                <Text size="sm" c="dimmed">
+                  기억이 안 나면 "모르겠다"를 선택해도 됩니다
+                </Text>
+              </Stack>
+              <Group justify="center" gap="sm" wrap="wrap">
+                {config.genres.map((genre) => (
+                  <Button
+                    key={genre}
+                    size="md"
+                    variant={selectedGenres.includes(genre) ? "filled" : "light"}
+                    onClick={() => handleGenreClick(genre)}
+                  >
+                    {genre}
+                  </Button>
+                ))}
+              </Group>
+              <Group justify="center" gap="sm">
+                <Button
+                  size="md"
+                  variant="light"
+                  color="gray"
+                  onClick={handleGenreConfirm}
+                >
+                  모르겠다
+                </Button>
+                {selectedGenres.length > 0 && (
+                  <Button
+                    size="md"
+                    onClick={handleGenreConfirm}
+                  >
+                    선택 완료
+                  </Button>
+                )}
+              </Group>
+            </Stack>
+          </Center>
+        )}
+
+        {/* 장르 선택 후: 상단에 작게 표시 */}
+        {genreConfirmed && (
+          <Group justify="center" gap={6} pb="sm" wrap="wrap">
+            {config.genres.map((genre) => (
+              <Button
+                key={genre}
+                size="compact-xs"
+                variant={selectedGenres.includes(genre) ? "filled" : "light"}
+                onClick={() => handleGenreClick(genre)}
+              >
+                {genre}
+              </Button>
+            ))}
+            <Button
+              size="compact-xs"
+              variant={selectedGenres.length === 0 ? "filled" : "light"}
+              color="gray"
+              onClick={handleGenreClear}
+            >
+              전체
+            </Button>
+          </Group>
+        )}
+
+        {genreConfirmed && messages.length === 0 && !loading && (
           <Center flex={1}>
             <Stack align="center" gap="xs">
               <Text size="lg" c="dimmed">검색 예시</Text>
@@ -337,20 +457,29 @@ export function ChatContainer({ media = "webtoon" }: { media?: MediaType }) {
           </Group>
         )}
 
-        <Paper py="md">
-          <Stack gap="xs">
-            {isRefining && (
-              <Text size="xs" c="blue" ta="center">
-                기억나는 내용을 더 입력해주세요
-              </Text>
-            )}
-            <GenreFilter value={genres} onChange={setGenres} />
-            <ChatInput
-              onSubmit={handleSubmit}
-              loading={loading}
-            />
-          </Stack>
-        </Paper>
+        {isDone && (
+          <Group justify="center" p="sm">
+            <Button variant="light" onClick={handleReset}>
+              다시 검색하기
+            </Button>
+          </Group>
+        )}
+
+        {genreConfirmed && (
+          <Paper py="md">
+            <Stack gap="xs">
+              {isRefining && (
+                <Text size="xs" c="blue" ta="center">
+                  기억나는 내용을 더 입력해주세요
+                </Text>
+              )}
+              <ChatInput
+                onSubmit={handleSubmit}
+                loading={loading}
+              />
+            </Stack>
+          </Paper>
+        )}
       </Stack>
     </Container>
   );
