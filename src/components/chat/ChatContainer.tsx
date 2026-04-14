@@ -100,7 +100,7 @@ type SessionState =
   | { phase: "done" }
   | null;
 
-export function ChatContainer({ media = "webtoon" }: { media?: MediaType }) {
+export function ChatContainer({ media = "movie" }: { media?: MediaType }) {
   const config = MEDIA_CONFIG[media];
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
@@ -321,7 +321,7 @@ export function ChatContainer({ media = "webtoon" }: { media?: MediaType }) {
   }, [doSearch]);
 
   // 카드 선택
-  const handleSelect = useCallback(async (webtoon: ContentResult) => {
+  const handleSelect = useCallback(async (selected: ContentResult) => {
     const session = sessionRef.current;
     if (session?.phase !== "selecting") return;
 
@@ -331,7 +331,7 @@ export function ChatContainer({ media = "webtoon" }: { media?: MediaType }) {
 
     setMessages((prev) =>
       prev.map((m) =>
-        m.selectable ? { ...m, selectable: false, selectedId: webtoon.id } : m,
+        m.selectable ? { ...m, selectable: false, selectedId: selected.id } : m,
       ),
     );
 
@@ -340,7 +340,7 @@ export function ChatContainer({ media = "webtoon" }: { media?: MediaType }) {
       fetch(config.feedbackApi, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query, webtoonId: webtoon.id }),
+        body: JSON.stringify({ query, webtoonId: selected.id }),
       }).catch((err) => console.error("[feedback]", err));
     }
 
@@ -349,7 +349,7 @@ export function ChatContainer({ media = "webtoon" }: { media?: MediaType }) {
       {
         id: `found-${Date.now()}`,
         role: "assistant",
-        content: `**${webtoon.title}** 찾으셨군요!`,
+        content: `**${selected.title}** 찾으셨군요!`,
       },
     ]);
 

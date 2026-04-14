@@ -6,7 +6,7 @@ const program = new Command();
 
 program
   .name("plotpick")
-  .description("PlotPick CLI — 웹툰 데이터 파이프라인")
+  .description("PlotPick CLI — 콘텐츠 데이터 파이프라인")
   .version("0.1.0");
 
 program

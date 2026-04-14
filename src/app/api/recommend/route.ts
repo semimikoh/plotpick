@@ -1,6 +1,6 @@
 import { streamRecommendation } from "@/core/llm/recommend";
 import { createTextStreamResponse } from "ai";
-import type { SearchResult } from "@/core/search/vector";
+import type { ContentResult } from "@/core/types/search";
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -15,7 +15,7 @@ export async function POST(request: Request) {
 
   const { query, results, media } = body as {
     query?: string;
-    results?: SearchResult[];
+    results?: ContentResult[];
     media?: "webtoon" | "movie";
   };
 

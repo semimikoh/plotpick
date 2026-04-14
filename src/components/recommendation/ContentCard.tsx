@@ -16,17 +16,17 @@ function similarityColor(score: number): string {
   return "gray";
 }
 
-export function WebtoonCard({
-  webtoon,
+export function ContentCard({
+  item,
   onSelect,
   selected,
 }: {
-  webtoon: ContentResult;
-  onSelect?: (webtoon: ContentResult) => void;
+  item: ContentResult;
+  onSelect?: (item: ContentResult) => void;
   selected?: boolean;
 }) {
-  const score = (webtoon.similarity * 100).toFixed(1);
-  const color = similarityColor(webtoon.similarity);
+  const score = (item.similarity * 100).toFixed(1);
+  const color = similarityColor(item.similarity);
 
   return (
     <Card
@@ -39,17 +39,17 @@ export function WebtoonCard({
         borderWidth: selected ? 2 : undefined,
         opacity: selected === false ? 0.5 : 1,
       }}
-      onClick={() => onSelect?.(webtoon)}
+      onClick={() => onSelect?.(item)}
       role={onSelect ? "button" : "article"}
       tabIndex={onSelect ? 0 : undefined}
-      aria-label={`${webtoon.title} - 유사도 ${score}%`}
+      aria-label={`${item.title} - 유사도 ${score}%`}
       aria-selected={selected}
-      onKeyDown={onSelect ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(webtoon); } } : undefined}
+      onKeyDown={onSelect ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(item); } } : undefined}
     >
       <Stack gap="xs">
         <Group justify="space-between" align="flex-start">
           <Text size="sm" fw={600} style={{ flex: 1 }}>
-            {webtoon.title}
+            {item.title}
           </Text>
           <Badge size="xs" variant="light" color={color}>
             {score}%
@@ -57,7 +57,7 @@ export function WebtoonCard({
         </Group>
 
         <Progress
-          value={webtoon.similarity * 100}
+          value={item.similarity * 100}
           color={color}
           size="xs"
           radius="xl"
@@ -65,12 +65,12 @@ export function WebtoonCard({
         />
 
         <Group gap="xs">
-          {webtoon.platform && (
+          {item.platform && (
             <Badge size="xs" variant="outline">
-              {webtoon.platform}
+              {item.platform}
             </Badge>
           )}
-          {webtoon.genres.map((g) => (
+          {item.genres.map((g) => (
             <Badge key={g} size="xs" variant="dot">
               {g}
             </Badge>
@@ -78,12 +78,12 @@ export function WebtoonCard({
         </Group>
 
         <Text size="xs" c="gray.6" lineClamp={3}>
-          {webtoon.description}
+          {item.description}
         </Text>
 
-        {webtoon.url.startsWith("http") && (
+        {item.url.startsWith("http") && (
           <Anchor
-            href={webtoon.url}
+            href={item.url}
             target="_blank"
             rel="noopener noreferrer"
             size="xs"

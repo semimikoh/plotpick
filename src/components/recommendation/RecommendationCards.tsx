@@ -1,6 +1,6 @@
 import { SimpleGrid } from "@mantine/core";
 import type { ContentResult } from "@/core/types/search";
-import { WebtoonCard } from "@/components/recommendation/WebtoonCard";
+import { ContentCard } from "@/components/recommendation/ContentCard";
 
 export function RecommendationCards({
   results,
@@ -8,15 +8,15 @@ export function RecommendationCards({
   selectedId,
 }: {
   results: ContentResult[];
-  onSelect?: (webtoon: ContentResult) => void;
+  onSelect?: (item: ContentResult) => void;
   selectedId?: string | null;
 }) {
   return (
     <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
       {results.map((r) => (
-        <WebtoonCard
+        <ContentCard
           key={r.id}
-          webtoon={r}
+          item={r}
           onSelect={onSelect}
           selected={selectedId ? r.id === selectedId : undefined}
         />

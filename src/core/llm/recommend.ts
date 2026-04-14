@@ -1,8 +1,8 @@
 import { streamText } from "ai";
 import { openai } from "@ai-sdk/openai";
-import type { SearchResult } from "@/core/search/vector";
+import type { ContentResult } from "@/core/types/search";
 
-export function buildContext(results: SearchResult[]): string {
+export function buildContext(results: ContentResult[]): string {
   return results
     .map((r, i) => {
       const genres = r.genres.length > 0 ? ` (${r.genres.join(", ")})` : "";
@@ -11,7 +11,7 @@ export function buildContext(results: SearchResult[]): string {
     .join("\n\n");
 }
 
-export function streamRecommendation(query: string, results: SearchResult[], media: "webtoon" | "movie" = "movie") {
+export function streamRecommendation(query: string, results: ContentResult[], media: "webtoon" | "movie" = "movie") {
   const context = buildContext(results);
   const isSingleResult = results.length === 1;
   const label = media === "movie" ? "영화" : "웹툰";
