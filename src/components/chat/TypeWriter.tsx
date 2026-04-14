@@ -40,18 +40,11 @@ export function TypeWriter({
   const revealed = text.slice(0, revealedLen);
   const done = revealedLen >= text.length;
 
+  // 가상화에서 높이를 측정하므로 투명 텍스트 해킹 불필요
+  // virtualizer.measureElement가 실제 DOM 높이를 측정해서 보정
   return (
-    <Box pos="relative" fz="sm">
-      {/* 전체 텍스트로 높이 확보 (투명) */}
-      {!done && (
-        <Box style={{ color: "transparent", userSelect: "none" }} aria-hidden>
-          <Markdown>{text}</Markdown>
-        </Box>
-      )}
-      {/* 타이핑 중인 텍스트 (위에 겹침) */}
-      <Box pos={done ? "relative" : "absolute"} top={0} left={0} right={0}>
-        <Markdown>{done ? text : revealed}</Markdown>
-      </Box>
+    <Box fz="sm">
+      <Markdown>{done ? text : revealed}</Markdown>
     </Box>
   );
 }
