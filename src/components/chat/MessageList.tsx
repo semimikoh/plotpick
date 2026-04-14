@@ -14,6 +14,9 @@ export const MessageList = memo(function MessageList({ messages }: { messages: C
       flex={1}
       style={{ overflow: "auto" }}
       p="md"
+      role="log"
+      aria-label="대화 내역"
+      aria-live="polite"
     >
       <Box
         pos="relative"

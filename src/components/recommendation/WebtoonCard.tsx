@@ -40,6 +40,11 @@ export function WebtoonCard({
         opacity: selected === false ? 0.5 : 1,
       }}
       onClick={() => onSelect?.(webtoon)}
+      role={onSelect ? "button" : "article"}
+      tabIndex={onSelect ? 0 : undefined}
+      aria-label={`${webtoon.title} - 유사도 ${score}%`}
+      aria-selected={selected}
+      onKeyDown={onSelect ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(webtoon); } } : undefined}
     >
       <Stack gap="xs">
         <Group justify="space-between" align="flex-start">
@@ -56,6 +61,7 @@ export function WebtoonCard({
           color={color}
           size="xs"
           radius="xl"
+          aria-label={`유사도 ${score}%`}
         />
 
         <Group gap="xs">

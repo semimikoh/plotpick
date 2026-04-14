@@ -3,13 +3,50 @@
 import {
   Stack, Title, Text, Center, Loader, Container, Paper, Button, Group,
 } from "@mantine/core";
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useMemo, memo } from "react";
 import { ChatInput } from "@/components/chat/ChatInput";
+import { GenreSelector } from "@/components/chat/GenreSelector";
 import { MessageList } from "@/components/chat/MessageList";
 import type { ChatMessage } from "@/components/chat/Message";
 import type { SearchResult } from "@/core/search/vector";
 
 type MediaType = "webtoon" | "movie";
+
+const GenreBar = memo(function GenreBar({
+  genres,
+  selected,
+  onClickGenre,
+  onClear,
+}: {
+  genres: string[];
+  selected: string[];
+  onClickGenre: (genre: string) => void;
+  onClear: () => void;
+}) {
+  return (
+    <Group justify="center" gap={6} pb="sm" wrap="wrap" role="group" aria-label="장르 필터">
+      {genres.map((genre) => (
+        <Button
+          key={genre}
+          size="compact-xs"
+          variant={selected.includes(genre) ? "filled" : "light"}
+          onClick={() => onClickGenre(genre)}
+          aria-pressed={selected.includes(genre)}
+        >
+          {genre}
+        </Button>
+      ))}
+      <Button
+        size="compact-xs"
+        variant={selected.length === 0 ? "filled" : "light"}
+        color="gray"
+        onClick={onClear}
+      >
+        전체
+      </Button>
+    </Group>
+  );
+});
 
 const PAGE_SIZE = 5;
 
@@ -72,6 +109,12 @@ export function ChatContainer({ media = "webtoon" }: { media?: MediaType }) {
   const sessionRef = useRef<SessionState>(null);
   const [, forceUpdate] = useState(0);
 
+  const handleGenreConfirm = useCallback((selected: string[]) => {
+    setSelectedGenres(selected);
+    selectedGenresRef.current = selected;
+    setGenreConfirmed(true);
+  }, []);
+
   const handleGenreClick = useCallback((genre: string) => {
     setSelectedGenres((prev) => {
       const next = prev.includes(genre)
@@ -85,10 +128,6 @@ export function ChatContainer({ media = "webtoon" }: { media?: MediaType }) {
   const handleGenreClear = useCallback(() => {
     setSelectedGenres([]);
     selectedGenresRef.current = [];
-  }, []);
-
-  const handleGenreConfirm = useCallback(() => {
-    setGenreConfirmed(true);
   }, []);
 
   // LLM 응답 가져오기 (완성 후 한 번에 표시)
@@ -343,8 +382,11 @@ export function ChatContainer({ media = "webtoon" }: { media?: MediaType }) {
     ]);
   }, []);
 
-  const messagesWithHandlers = messages.map((m) =>
-    m.selectable ? { ...m, onSelect: handleSelect } : m,
+  const messagesWithHandlers = useMemo(
+    () => messages.map((m) =>
+      m.selectable ? { ...m, onSelect: handleSelect } : m,
+    ),
+    [messages, handleSelect],
   );
 
   const session = sessionRef.current;
@@ -362,72 +404,22 @@ export function ChatContainer({ media = "webtoon" }: { media?: MediaType }) {
           </Text>
         </Stack>
 
-        {/* 장르 미선택 + 대화 없음: 장르 선택 화면 */}
+        {/* 장르 미선택: 장르 선택 화면 (별도 컴포넌트로 리렌더링 격리) */}
         {!genreConfirmed && messages.length === 0 && (
-          <Center flex={1}>
-            <Stack align="center" gap="lg" maw={400}>
-              <Stack align="center" gap={4}>
-                <Text size="lg" fw={600}>장르를 먼저 선택해 주세요</Text>
-                <Text size="sm" c="dimmed">
-                  기억이 안 나면 "모르겠다"를 선택해도 됩니다
-                </Text>
-              </Stack>
-              <Group justify="center" gap="sm" wrap="wrap">
-                {config.genres.map((genre) => (
-                  <Button
-                    key={genre}
-                    size="md"
-                    variant={selectedGenres.includes(genre) ? "filled" : "light"}
-                    onClick={() => handleGenreClick(genre)}
-                  >
-                    {genre}
-                  </Button>
-                ))}
-              </Group>
-              <Group justify="center" gap="sm">
-                <Button
-                  size="md"
-                  variant="light"
-                  color="gray"
-                  onClick={handleGenreConfirm}
-                >
-                  모르겠다
-                </Button>
-                {selectedGenres.length > 0 && (
-                  <Button
-                    size="md"
-                    onClick={handleGenreConfirm}
-                  >
-                    선택 완료
-                  </Button>
-                )}
-              </Group>
-            </Stack>
-          </Center>
+          <GenreSelector
+            genres={config.genres}
+            onConfirm={handleGenreConfirm}
+          />
         )}
 
-        {/* 장르 선택 후: 상단에 작게 표시 */}
+        {/* 장르 선택 후: 상단에 작게 표시 (메모 컴포넌트) */}
         {genreConfirmed && (
-          <Group justify="center" gap={6} pb="sm" wrap="wrap">
-            {config.genres.map((genre) => (
-              <Button
-                key={genre}
-                size="compact-xs"
-                variant={selectedGenres.includes(genre) ? "filled" : "light"}
-                onClick={() => handleGenreClick(genre)}
-              >
-                {genre}
-              </Button>
-            ))}
-            <Button
-              size="compact-xs"
-              variant={selectedGenres.length === 0 ? "filled" : "light"}
-              color="gray"
-              onClick={handleGenreClear}
-            >
-              전체
-            </Button>
-          </Group>
+          <GenreBar
+            genres={config.genres}
+            selected={selectedGenres}
+            onClickGenre={handleGenreClick}
+            onClear={handleGenreClear}
+          />
         )}
 
         {genreConfirmed && messages.length === 0 && !loading && (
@@ -444,7 +436,7 @@ export function ChatContainer({ media = "webtoon" }: { media?: MediaType }) {
         {messages.length > 0 && <MessageList messages={messagesWithHandlers} />}
 
         {loading && (
-          <Center p="sm">
+          <Center p="sm" aria-live="polite" aria-label="검색 중">
             <Loader size="sm" />
           </Center>
         )}
