@@ -1,6 +1,13 @@
 import { getSupabase } from "@/core/db/supabase";
 import type { SearchResult } from "@/core/search/vector";
 
+function escapeIlike(word: string): string {
+  return word
+    .replace(/\\/g, "\\\\")
+    .replace(/%/g, "\\%")
+    .replace(/_/g, "\\_");
+}
+
 function buildWordFilters(query: string): string {
   const words = query
     .trim()
@@ -13,9 +20,11 @@ function buildWordFilters(query: string): string {
     return "title.ilike.%%";
   }
 
-  // 각 단어에 대해 제목 OR 설명 매칭, 단어들은 OR로 연결
   return words
-    .map((w) => `title.ilike.%${w}%,description.ilike.%${w}%`)
+    .map((w) => {
+      const escaped = escapeIlike(w);
+      return `title.ilike.%${escaped}%,description.ilike.%${escaped}%`;
+    })
     .join(",");
 }
 

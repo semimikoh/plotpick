@@ -1,56 +1,33 @@
 import { NextResponse } from "next/server";
 import { hybridSearch } from "@/core/search/hybrid";
-import { inferGenres } from "@/core/llm/infer-genres";
+import { z } from "zod";
+
+const RequestSchema = z.object({
+  query: z.string().trim().min(1, "query 필요").max(200, "200자 이내"),
+  genres: z.array(z.string()).optional(),
+  count: z.number().int().min(1).max(20).optional().default(10),
+});
 
 export async function POST(request: Request) {
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json(
-      { error: "잘못된 JSON" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "잘못된 JSON" }, { status: 400 });
   }
 
-  const { query, genres, count, autoGenre } = body as Record<string, unknown>;
-
-  if (!query || typeof query !== "string") {
-    return NextResponse.json(
-      { error: "query 파라미터가 필요합니다." },
-      { status: 400 },
-    );
+  const parsed = RequestSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "잘못된 요청" }, { status: 400 });
   }
 
-  if (query.length > 200) {
-    return NextResponse.json(
-      { error: "검색어는 200자 이내로 입력해주세요." },
-      { status: 400 },
-    );
-  }
-
-  let safeGenres = Array.isArray(genres) ? (genres as string[]) : undefined;
-  const safeCount = typeof count === "number" ? Math.min(count, 20) : 10;
+  const { query, genres, count } = parsed.data;
 
   try {
-    // LLM 장르 자동 추론 (유저 장르 없고 autoGenre가 true일 때)
-    let inferredGenres: string[] = [];
-    if (!safeGenres && autoGenre) {
-      inferredGenres = await inferGenres(query);
-      if (inferredGenres.length > 0) safeGenres = inferredGenres;
-    }
-
-    const results = await hybridSearch(query, {
-      count: safeCount,
-      genres: safeGenres,
-    });
-
-    return NextResponse.json({ results, inferredGenres });
+    const results = await hybridSearch(query, { count, genres });
+    return NextResponse.json({ results });
   } catch (err) {
     console.error("[api/search]", err);
-    return NextResponse.json(
-      { error: "검색 중 오류가 발생했습니다." },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "검색 오류" }, { status: 500 });
   }
 }

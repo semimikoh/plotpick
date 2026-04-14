@@ -9,13 +9,24 @@ function extractWords(query: string): string[] {
     .filter((w) => w.length > 1);
 }
 
+// PostgREST ILIKE 특수문자 이스케이프 (%, _, \)
+function escapeIlike(word: string): string {
+  return word
+    .replace(/\\/g, "\\\\")
+    .replace(/%/g, "\\%")
+    .replace(/_/g, "\\_");
+}
+
 function buildWordFilters(query: string): string {
   const words = extractWords(query).slice(0, 5);
 
   if (words.length === 0) return "title.ilike.%%";
 
   return words
-    .map((w) => `title.ilike.%${w}%,description.ilike.%${w}%,director.ilike.%${w}%`)
+    .map((w) => {
+      const escaped = escapeIlike(w);
+      return `title.ilike.%${escaped}%,description.ilike.%${escaped}%,director.ilike.%${escaped}%`;
+    })
     .join(",");
 }
 
