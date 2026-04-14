@@ -14,9 +14,14 @@ dist/
 
 # data (raw sources)
 data/raw.json
+data/movies_raw.json
 data/kakao_raw.csv
 data/naver_raw.csv
 data/naver_live.json
+
+# build artifacts
+tsconfig.tsbuildinfo
+coverage/
 
 # os
 .DS_Store
