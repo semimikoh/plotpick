@@ -49,6 +49,7 @@ export function ChatInput({
       <TextInput
         flex={1}
         placeholder={placeholder}
+        aria-label={placeholder}
         value={value}
         onChange={(e) => setValue(e.currentTarget.value)}
         onKeyDown={(e) => {

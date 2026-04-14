@@ -65,9 +65,11 @@ export function WebtoonCard({
         />
 
         <Group gap="xs">
-          <Badge size="xs" variant="outline">
-            {webtoon.platform}
-          </Badge>
+          {webtoon.platform && (
+            <Badge size="xs" variant="outline">
+              {webtoon.platform}
+            </Badge>
+          )}
           {webtoon.genres.map((g) => (
             <Badge key={g} size="xs" variant="dot">
               {g}
@@ -79,14 +81,17 @@ export function WebtoonCard({
           {webtoon.description}
         </Text>
 
-        <Anchor
-          href={webtoon.url}
-          target="_blank"
-          size="xs"
-          onClick={(e) => e.stopPropagation()}
-        >
-          위키백과
-        </Anchor>
+        {webtoon.url.startsWith("http") && (
+          <Anchor
+            href={webtoon.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            size="xs"
+            onClick={(e) => e.stopPropagation()}
+          >
+            상세 정보
+          </Anchor>
+        )}
       </Stack>
     </Card>
   );

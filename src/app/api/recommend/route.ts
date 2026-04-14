@@ -7,15 +7,16 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return new Response(JSON.stringify({ error: "잘못된 JSON 형식입니다." }), {
+    return new Response(JSON.stringify({ error: "잘못된 JSON" }), {
       status: 400,
       headers: { "Content-Type": "application/json" },
     });
   }
 
-  const { query, results } = body as {
+  const { query, results, media } = body as {
     query?: string;
     results?: SearchResult[];
+    media?: "webtoon" | "movie";
   };
 
   if (!query || typeof query !== "string" || !Array.isArray(results)) {
@@ -26,7 +27,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const stream = streamRecommendation(query, results);
+    const stream = streamRecommendation(query, results, media ?? "movie");
     return createTextStreamResponse({ textStream: stream.textStream });
   } catch (err) {
     console.error("[api/recommend]", err);

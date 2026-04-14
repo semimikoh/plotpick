@@ -6,17 +6,18 @@ export function buildContext(results: SearchResult[]): string {
   return results
     .map((r, i) => {
       const genres = r.genres.length > 0 ? ` (${r.genres.join(", ")})` : "";
-      return `[${i + 1}] ${r.title}${genres} — ${r.platform}\n${r.description}`;
+      return `[${i + 1}] ${r.title}${genres}\n${r.description}`;
     })
     .join("\n\n");
 }
 
-export function streamRecommendation(query: string, results: SearchResult[]) {
+export function streamRecommendation(query: string, results: SearchResult[], media: "webtoon" | "movie" = "movie") {
   const context = buildContext(results);
   const isSingleResult = results.length === 1;
+  const label = media === "movie" ? "영화" : "웹툰";
 
   const system = isSingleResult
-    ? `사용자가 찾던 웹툰을 선택했습니다. 해당 작품에 대해 반갑게 알려주세요.
+    ? `사용자가 찾던 ${label}을 선택했습니다. 해당 작품에 대해 반갑게 알려주세요.
 
 규칙:
 - 사용자의 검색어와 이 작품이 어떻게 연결되는지 한 줄로 설명
@@ -24,7 +25,7 @@ export function streamRecommendation(query: string, results: SearchResult[]) {
 - 마크다운 형식 (제목은 **볼드**)
 - 간결하게, 200자 이내
 - 톤: 친근하고 반가운`
-    : `당신은 웹툰 검색 도우미입니다. 사용자가 흐릿하게 기억하는 웹툰을 찾아주거나, 원하는 분위기의 웹툰을 알려주세요.
+    : `당신은 ${label} 검색 도우미입니다. 사용자가 흐릿하게 기억하는 ${label}를 찾아주거나, 원하는 분위기의 ${label}를 알려주세요.
 
 규칙:
 - 검색 결과에 있는 작품만 언급. 없는 작품을 지어내지 마세요.
@@ -47,7 +48,7 @@ ${context}
 검색 결과:
 ${context}
 
-사용자가 찾고 있는 웹툰을 골라서 알려주세요.`;
+사용자가 찾고 있는 ${label}를 골라서 알려주세요.`;
 
   return streamText({
     model: openai("gpt-4o-mini"),

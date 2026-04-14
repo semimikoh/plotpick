@@ -8,7 +8,7 @@ export async function POST(request: Request) {
     body = await request.json();
   } catch {
     return NextResponse.json(
-      { error: "잘못된 JSON 형식입니다." },
+      { error: "잘못된 JSON" },
       { status: 400 },
     );
   }

@@ -136,7 +136,7 @@ export function ChatContainer({ media = "webtoon" }: { media?: MediaType }) {
       const res = await fetch(config.recommendApi, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query, results }),
+        body: JSON.stringify({ query, results, media }),
       });
 
       if (res.ok && res.body) {
@@ -151,8 +151,8 @@ export function ChatContainer({ media = "webtoon" }: { media?: MediaType }) {
         }
         return text;
       }
-    } catch {
-      // 무시
+    } catch (err) {
+      console.error("[fetchLLM]", err);
     }
     return "";
   }, [config.recommendApi]);
@@ -333,11 +333,14 @@ export function ChatContainer({ media = "webtoon" }: { media?: MediaType }) {
       ),
     );
 
-    fetch(config.feedbackApi, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query, webtoonId: webtoon.id }),
-    }).catch(() => {});
+    // 웹툰만 피드백 저장 (영화는 별도 테이블 필요)
+    if (media === "webtoon") {
+      fetch(config.feedbackApi, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query, webtoonId: webtoon.id }),
+      }).catch(() => {});
+    }
 
     setMessages((prev) => [
       ...prev,

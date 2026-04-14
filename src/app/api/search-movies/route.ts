@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ results, inferredGenres });
   } catch (err) {
     console.error("[api/search-movies]", err);
-    const msg = err instanceof Error ? err.message : String(err);
-    return NextResponse.json({ error: "검색 오류", detail: msg }, { status: 500 });
+    console.error("[api/search-movies]", err);
+    return NextResponse.json({ error: "검색 오류" }, { status: 500 });
   }
 }
