@@ -1,21 +1,6 @@
 import { getSupabase } from "@/core/db/supabase";
 import type { MovieSearchResult } from "@/core/search/movie-vector";
-
-function extractWords(query: string): string[] {
-  return query
-    .trim()
-    .replace(/[,."'()[\]{}]/g, " ")
-    .split(/\s+/)
-    .filter((w) => w.length > 1);
-}
-
-// PostgREST ILIKE 특수문자 이스케이프 (%, _, \)
-function escapeIlike(word: string): string {
-  return word
-    .replace(/\\/g, "\\\\")
-    .replace(/%/g, "\\%")
-    .replace(/_/g, "\\_");
-}
+import { escapeIlike, extractWords } from "@/core/search/keyword-utils";
 
 function buildWordFilters(query: string): string {
   const words = extractWords(query).slice(0, 5);

@@ -10,7 +10,13 @@ import {
   buildCumulativeWidths,
   measureTextWidth,
 } from "./measure";
-import type { ChatMessage } from "@/components/chat/Message";
+// 채팅 컴포넌트 타입에 직접 의존하지 않고 필요한 필드만 정의
+interface MessageLike {
+  role: "user" | "assistant";
+  content: string;
+  genreOptions?: string[];
+  results?: { id: string }[];
+}
 
 // --- 타입 ---
 
@@ -201,7 +207,7 @@ const GENRE_BUTTON_HEIGHT = 30;
 const GENRE_BUTTON_GAP = 8;
 
 export function estimateMessageHeight(
-  message: ChatMessage,
+  message: MessageLike,
   containerWidth: number,
   cache: MeasureCache = defaultCache,
 ): number {

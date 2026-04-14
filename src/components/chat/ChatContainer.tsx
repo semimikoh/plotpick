@@ -110,6 +110,11 @@ export function ChatContainer({ media = "webtoon" }: { media?: MediaType }) {
   const sessionRef = useRef<SessionState>(null);
   const [, forceUpdate] = useState(0);
 
+  const setSession = useCallback((next: SessionState) => {
+    sessionRef.current = next;
+    forceUpdate((n) => n + 1);
+  }, []);
+
   const handleGenreConfirm = useCallback((selected: string[]) => {
     setSelectedGenres(selected);
     selectedGenresRef.current = selected;
@@ -172,8 +177,7 @@ export function ChatContainer({ media = "webtoon" }: { media?: MediaType }) {
           content: "모든 결과를 보여드렸어요. 다른 키워드로 다시 검색해보세요.",
         },
       ]);
-      sessionRef.current = null;
-      forceUpdate((n) => n + 1);
+      setSession(null);
       return;
     }
 
@@ -258,8 +262,7 @@ export function ChatContainer({ media = "webtoon" }: { media?: MediaType }) {
         allResults: results,
         page: 1, // 첫 페이지는 여기서 보여줌
       };
-      sessionRef.current = session;
-      forceUpdate((n) => n + 1);
+      setSession(session);
 
       // LLM 텍스트 + 카드를 하나의 메시지로
       setMessages((prev) => [
@@ -283,8 +286,7 @@ export function ChatContainer({ media = "webtoon" }: { media?: MediaType }) {
           content: "검색 중 오류가 발생했습니다.",
         },
       ]);
-      sessionRef.current = null;
-      forceUpdate((n) => n + 1);
+      setSession(null);
     } finally {
       setLoading(false);
     }
@@ -303,8 +305,7 @@ export function ChatContainer({ media = "webtoon" }: { media?: MediaType }) {
         { id: `user-${Date.now()}`, role: "user", content: input },
       ]);
 
-      sessionRef.current = null;
-      forceUpdate((n) => n + 1);
+      setSession(null);
       await doSearch(combinedQuery, true);
       return;
     }
@@ -352,16 +353,14 @@ export function ChatContainer({ media = "webtoon" }: { media?: MediaType }) {
       },
     ]);
 
-    sessionRef.current = { phase: "done" };
-    forceUpdate((n) => n + 1);
+    setSession({ phase: "done" });
   }, [config.feedbackApi]);
 
   // 다시 검색하기
   const handleReset = useCallback(() => {
     setMessages([]);
-    sessionRef.current = null;
+    setSession(null);
     shownIdsRef.current = new Set();
-    forceUpdate((n) => n + 1);
   }, []);
 
   // "없어요"
@@ -369,8 +368,7 @@ export function ChatContainer({ media = "webtoon" }: { media?: MediaType }) {
     const session = sessionRef.current;
     if (session?.phase !== "selecting") return;
 
-    sessionRef.current = { phase: "refining", query: session.query };
-    forceUpdate((n) => n + 1);
+    setSession({ phase: "refining", query: session.query });
 
     setMessages((prev) =>
       prev.map((m) => (m.selectable ? { ...m, selectable: false } : m)),

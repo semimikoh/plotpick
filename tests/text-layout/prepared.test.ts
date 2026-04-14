@@ -1,7 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { prepareTextLayout, prepareMarkdownLayout, estimateMessageHeight, type LayoutParams } from "@/lib/text-layout/prepared";
 import { createCache, type FontDescriptor, type MeasureCache } from "@/lib/text-layout/cache";
-import type { ChatMessage } from "@/components/chat/Message";
+// estimateMessageHeight는 MessageLike 인터페이스를 받으므로 MessageLike 불필요
+type MessageLike = {
+  role: "user" | "assistant";
+  content: string;
+  genreOptions?: string[];
+  results?: { id: string }[];
+};
 
 // Canvas measureText 모킹: 모든 문자 폭 = 10px 고정
 vi.mock("@/lib/text-layout/measure", () => {
@@ -191,37 +197,37 @@ describe("estimateMessageHeight", () => {
   });
 
   it("사용자 메시지 높이 계산", () => {
-    const msg: ChatMessage = { id: "1", role: "user", content: "안녕하세요" };
+    const msg: MessageLike = { role: "user", content: "안녕하세요" };
     const height = estimateMessageHeight(msg, 400, cache);
     expect(height).toBeGreaterThan(0);
   });
 
   it("어시스턴트 메시지 높이 계산 (마크다운)", () => {
-    const msg: ChatMessage = { id: "1", role: "assistant", content: "**추천** 결과입니다" };
+    const msg: MessageLike = { role: "assistant", content: "**추천** 결과입니다" };
     const height = estimateMessageHeight(msg, 400, cache);
     expect(height).toBeGreaterThan(0);
   });
 
   it("카드 포함 메시지는 카드 높이 추가", () => {
-    const withCards: ChatMessage = {
-      id: "1", role: "assistant", content: "결과",
+    const withCards: MessageLike = {
+      role: "assistant", content: "결과",
       results: [
-        { id: "r1", title: "t", description: "d", url: "u", genres: [], platform: "", source: "", similarity: 0.5 },
-        { id: "r2", title: "t2", description: "d", url: "u", genres: [], platform: "", source: "", similarity: 0.4 },
+        { id: "r1" },
+        { id: "r2" },
       ],
     };
-    const without: ChatMessage = { id: "2", role: "assistant", content: "결과" };
+    const without: MessageLike = { role: "assistant", content: "결과" };
     const h1 = estimateMessageHeight(withCards, 600, cache);
     const h2 = estimateMessageHeight(without, 600, cache);
     expect(h1).toBeGreaterThan(h2);
   });
 
   it("sm 이상 폭에서 카드 2열", () => {
-    const msg: ChatMessage = {
-      id: "1", role: "assistant", content: "결과",
+    const msg: MessageLike = {
+      role: "assistant", content: "결과",
       results: [
-        { id: "r1", title: "t", description: "d", url: "u", genres: [], platform: "", source: "", similarity: 0.5 },
-        { id: "r2", title: "t2", description: "d", url: "u", genres: [], platform: "", source: "", similarity: 0.4 },
+        { id: "r1" },
+        { id: "r2" },
       ],
     };
     const wide = estimateMessageHeight(msg, 600, cache); // 2열
@@ -230,26 +236,26 @@ describe("estimateMessageHeight", () => {
   });
 
   it("장르 버튼 포함 시 높이 추가", () => {
-    const withGenres: ChatMessage = {
-      id: "1", role: "assistant", content: "장르 선택",
+    const withGenres: MessageLike = {
+      role: "assistant", content: "장르 선택",
       genreOptions: ["액션", "코미디", "공포", "스릴러", "드라마"],
     };
-    const without: ChatMessage = { id: "2", role: "assistant", content: "장르 선택" };
+    const without: MessageLike = { role: "assistant", content: "장르 선택" };
     const h1 = estimateMessageHeight(withGenres, 400, cache);
     const h2 = estimateMessageHeight(without, 400, cache);
     expect(h1).toBeGreaterThan(h2);
   });
 
   it("최소 높이 40px 보장", () => {
-    const msg: ChatMessage = { id: "1", role: "user", content: "" };
+    const msg: MessageLike = { role: "user", content: "" };
     const height = estimateMessageHeight(msg, 400, cache);
     expect(height).toBeGreaterThanOrEqual(40);
   });
 
   it("사용자 메시지는 80% 폭 적용", () => {
     const longText = "이것은 매우 긴 텍스트입니다 ".repeat(10);
-    const user: ChatMessage = { id: "1", role: "user", content: longText };
-    const assistant: ChatMessage = { id: "2", role: "assistant", content: longText };
+    const user: MessageLike = { role: "user", content: longText };
+    const assistant: MessageLike = { role: "assistant", content: longText };
     const hUser = estimateMessageHeight(user, 600, cache);
     const hAssistant = estimateMessageHeight(assistant, 600, cache);
     // 사용자 메시지는 폭이 좁으니 더 높아야 함

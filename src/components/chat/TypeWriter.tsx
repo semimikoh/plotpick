@@ -5,7 +5,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import Markdown from "react-markdown";
 
 // 텍스트를 어절(띄어쓰기) 단위로 끊어서 인덱스 배열 생성
-function buildWordBreaks(text: string): number[] {
+function buildWordEndIndices(text: string): number[] {
   const breaks: number[] = [];
   for (let i = 0; i < text.length; i++) {
     if (text[i] === " " || text[i] === "\n") {
@@ -27,7 +27,7 @@ export function TypeWriter({
 }) {
   const [step, setStep] = useState(0);
   const completeCalledRef = useRef(false);
-  const wordBreaks = useMemo(() => buildWordBreaks(text), [text]);
+  const wordBreaks = useMemo(() => buildWordEndIndices(text), [text]);
 
   useEffect(() => {
     setStep(0);
