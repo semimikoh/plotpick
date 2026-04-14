@@ -8,7 +8,7 @@ import { ChatInput } from "@/components/chat/ChatInput";
 import { GenreSelector } from "@/components/chat/GenreSelector";
 import { MessageList } from "@/components/chat/MessageList";
 import type { ChatMessage } from "@/components/chat/Message";
-import type { SearchResult } from "@/core/search/vector";
+import type { ContentResult } from "@/core/types/search";
 
 type MediaType = "webtoon" | "movie";
 
@@ -41,6 +41,7 @@ const GenreBar = memo(function GenreBar({
         variant={selected.length === 0 ? "filled" : "light"}
         color="gray"
         onClick={onClear}
+        aria-pressed={selected.length === 0}
       >
         전체
       </Button>
@@ -94,7 +95,7 @@ const MEDIA_CONFIG = {
 };
 
 type SessionState =
-  | { phase: "selecting"; query: string; allResults: SearchResult[]; page: number }
+  | { phase: "selecting"; query: string; allResults: ContentResult[]; page: number }
   | { phase: "refining"; query: string }
   | { phase: "done" }
   | null;
@@ -131,7 +132,7 @@ export function ChatContainer({ media = "webtoon" }: { media?: MediaType }) {
   }, []);
 
   // LLM 응답 가져오기 (완성 후 한 번에 표시)
-  const fetchLLM = useCallback(async (query: string, results: SearchResult[]): Promise<string> => {
+  const fetchLLM = useCallback(async (query: string, results: ContentResult[]): Promise<string> => {
     try {
       const res = await fetch(config.recommendApi, {
         method: "POST",
@@ -220,7 +221,7 @@ export function ChatContainer({ media = "webtoon" }: { media?: MediaType }) {
 
       if (!searchRes.ok) throw new Error(`HTTP ${searchRes.status}`);
       const data = await searchRes.json();
-      let results: SearchResult[] = data.results ?? [];
+      let results: ContentResult[] = data.results ?? [];
 
       // 이미 보여준 결과 제외
       if (excludeShown && shownIdsRef.current.size > 0) {
@@ -319,7 +320,7 @@ export function ChatContainer({ media = "webtoon" }: { media?: MediaType }) {
   }, [doSearch]);
 
   // 카드 선택
-  const handleSelect = useCallback(async (webtoon: SearchResult) => {
+  const handleSelect = useCallback(async (webtoon: ContentResult) => {
     const session = sessionRef.current;
     if (session?.phase !== "selecting") return;
 
@@ -339,7 +340,7 @@ export function ChatContainer({ media = "webtoon" }: { media?: MediaType }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query, webtoonId: webtoon.id }),
-      }).catch(() => {});
+      }).catch((err) => console.error("[feedback]", err));
     }
 
     setMessages((prev) => [

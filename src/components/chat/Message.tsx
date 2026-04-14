@@ -3,7 +3,7 @@
 import { Paper, Text, Box, Button, Group } from "@mantine/core";
 import { useState } from "react";
 import Markdown from "react-markdown";
-import type { SearchResult } from "@/core/search/vector";
+import type { ContentResult } from "@/core/types/search";
 import { RecommendationCards } from "@/components/recommendation/RecommendationCards";
 import { TypeWriter } from "@/components/chat/TypeWriter";
 
@@ -11,10 +11,10 @@ export type ChatMessage = {
   id: string;
   role: "user" | "assistant";
   content: string;
-  results?: SearchResult[];
+  results?: ContentResult[];
   selectable?: boolean;
   selectedId?: string | null;
-  onSelect?: (webtoon: SearchResult) => void;
+  onSelect?: (webtoon: ContentResult) => void;
   typing?: boolean;
   genreOptions?: string[];
   onGenreSelect?: (genre: string | null) => void;

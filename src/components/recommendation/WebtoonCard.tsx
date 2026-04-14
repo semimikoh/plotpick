@@ -7,7 +7,7 @@ import {
   Stack,
   Progress,
 } from "@mantine/core";
-import type { SearchResult } from "@/core/search/vector";
+import type { ContentResult } from "@/core/types/search";
 
 function similarityColor(score: number): string {
   if (score >= 0.8) return "green";
@@ -21,8 +21,8 @@ export function WebtoonCard({
   onSelect,
   selected,
 }: {
-  webtoon: SearchResult;
-  onSelect?: (webtoon: SearchResult) => void;
+  webtoon: ContentResult;
+  onSelect?: (webtoon: ContentResult) => void;
   selected?: boolean;
 }) {
   const score = (webtoon.similarity * 100).toFixed(1);

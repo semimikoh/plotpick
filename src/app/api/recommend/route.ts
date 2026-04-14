@@ -21,7 +21,7 @@ export async function POST(request: Request) {
 
   if (!query || typeof query !== "string" || !Array.isArray(results)) {
     return new Response(
-      JSON.stringify({ error: "query와 results가 필요합니다." }),
+      JSON.stringify({ error: "잘못된 요청" }),
       { status: 400, headers: { "Content-Type": "application/json" } },
     );
   }
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
   } catch (err) {
     console.error("[api/recommend]", err);
     return new Response(
-      JSON.stringify({ error: "추천 생성 중 오류가 발생했습니다." }),
+      JSON.stringify({ error: "추천 오류" }),
       { status: 500, headers: { "Content-Type": "application/json" } },
     );
   }

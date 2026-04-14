@@ -12,7 +12,7 @@ export async function POST(request: Request) {
   const { query, webtoonId } = body as Record<string, unknown>;
 
   if (!query || typeof query !== "string" || !webtoonId || typeof webtoonId !== "string") {
-    return NextResponse.json({ error: "query, webtoonId 필요" }, { status: 400 });
+    return NextResponse.json({ error: "잘못된 요청" }, { status: 400 });
   }
 
   const { error } = await getSupabase()
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
 
   if (error) {
     console.error("[api/feedback]", error.message);
-    return NextResponse.json({ error: "저장 실패" }, { status: 500 });
+    return NextResponse.json({ error: "피드백 오류" }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true });
