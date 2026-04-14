@@ -476,6 +476,7 @@ export function ChatContainer({ media = "webtoon" }: { media?: MediaType }) {
               <ChatInput
                 onSubmit={handleSubmit}
                 loading={loading}
+                placeholder={config.placeholder}
               />
             </Stack>
           </Paper>

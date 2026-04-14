@@ -27,9 +27,11 @@ const SubmitButton = memo(function SubmitButton({
 export function ChatInput({
   onSubmit,
   loading,
+  placeholder = "어떤 작품을 찾고 있나요?",
 }: {
   onSubmit: (query: string) => void;
   loading: boolean;
+  placeholder?: string;
 }) {
   const [value, setValue] = useState("");
   const valueRef = useRef(value);
@@ -46,7 +48,7 @@ export function ChatInput({
     <Group gap="xs">
       <TextInput
         flex={1}
-        placeholder="어떤 웹툰을 찾고 있나요?"
+        placeholder={placeholder}
         value={value}
         onChange={(e) => setValue(e.currentTarget.value)}
         onKeyDown={(e) => {

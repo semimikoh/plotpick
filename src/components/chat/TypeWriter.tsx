@@ -1,28 +1,41 @@
 "use client";
 
 import { Box } from "@mantine/core";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Markdown from "react-markdown";
+
+// 텍스트를 어절(띄어쓰기) 단위로 끊어서 인덱스 배열 생성
+function buildWordBreaks(text: string): number[] {
+  const breaks: number[] = [];
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === " " || text[i] === "\n") {
+      breaks.push(i + 1);
+    }
+  }
+  breaks.push(text.length);
+  return breaks;
+}
 
 export function TypeWriter({
   text,
-  speed = 15,
+  speed = 40,
   onComplete,
 }: {
   text: string;
   speed?: number;
   onComplete?: () => void;
 }) {
-  const [revealedLen, setRevealedLen] = useState(0);
+  const [step, setStep] = useState(0);
   const completeCalledRef = useRef(false);
+  const wordBreaks = useMemo(() => buildWordBreaks(text), [text]);
 
   useEffect(() => {
-    setRevealedLen(0);
+    setStep(0);
     completeCalledRef.current = false;
   }, [text]);
 
   useEffect(() => {
-    if (revealedLen >= text.length) {
+    if (step >= wordBreaks.length) {
       if (!completeCalledRef.current) {
         completeCalledRef.current = true;
         onComplete?.();
@@ -31,17 +44,16 @@ export function TypeWriter({
     }
 
     const timer = setTimeout(() => {
-      setRevealedLen((prev) => Math.min(prev + Math.ceil(Math.random() * 3), text.length));
+      setStep((prev) => prev + 1);
     }, speed);
 
     return () => clearTimeout(timer);
-  }, [revealedLen, text, speed, onComplete]);
+  }, [step, wordBreaks, speed, onComplete]);
 
-  const revealed = text.slice(0, revealedLen);
+  const revealedLen = step >= wordBreaks.length ? text.length : (wordBreaks[step - 1] ?? 0);
+  const revealed = step === 0 ? "" : text.slice(0, revealedLen);
   const done = revealedLen >= text.length;
 
-  // 가상화에서 높이를 측정하므로 투명 텍스트 해킹 불필요
-  // virtualizer.measureElement가 실제 DOM 높이를 측정해서 보정
   return (
     <Box fz="sm">
       <Markdown>{done ? text : revealed}</Markdown>
