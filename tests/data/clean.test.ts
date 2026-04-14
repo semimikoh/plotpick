@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { cleanWikiWebtoons, mergeAll, cleanKakaoCSV } from "@/core/data/clean";
+import { cleanWikiWebtoons, mergeAll, cleanKakaoCSV, cleanNaverCSV } from "@/core/data/clean";
 
 describe("cleanWikiWebtoons", () => {
   it("50자 미만 설명은 필터링", () => {
@@ -76,6 +76,29 @@ describe("cleanKakaoCSV", () => {
 ,100,url,제목,장르,img,짧음,kw`;
     const result = cleanKakaoCSV(csv);
     expect(result).toHaveLength(0);
+  });
+});
+
+describe("cleanNaverCSV", () => {
+  it("필드 파싱 + ID 추출", () => {
+    // 네이버 CSV 장르는 설명 뒤 쉼표+공백2개 이상으로 구분
+    const csv = `제목,"설명이 충분히 길어야 합니다 이것은 테스트  ,  액션 코미디 15세 이용가",http://example.com?titleId=123`;
+    const result = cleanNaverCSV(csv);
+    expect(result).toHaveLength(1);
+    expect(result[0].title).toBe("제목");
+    expect(result[0].id).toBe("naver-123");
+  });
+
+  it("설명 10자 미만 필터링", () => {
+    const csv = `제목,짧음,장르,url`;
+    const result = cleanNaverCSV(csv);
+    expect(result).toHaveLength(0);
+  });
+
+  it("BOM 제거", () => {
+    const csv = `\uFEFF제목,설명이 충분히 길어야 합니다 테스트입니다,장르,url`;
+    const result = cleanNaverCSV(csv);
+    expect(result[0].title).toBe("제목");
   });
 });
 

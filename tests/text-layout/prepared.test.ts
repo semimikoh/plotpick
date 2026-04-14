@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { prepareTextLayout, type LayoutParams } from "@/lib/text-layout/prepared";
+import { prepareTextLayout, prepareMarkdownLayout, estimateMessageHeight, type LayoutParams } from "@/lib/text-layout/prepared";
 import { createCache, type FontDescriptor, type MeasureCache } from "@/lib/text-layout/cache";
+import type { ChatMessage } from "@/components/chat/Message";
 
 // Canvas measureText 모킹: 모든 문자 폭 = 10px 고정
 vi.mock("@/lib/text-layout/measure", () => {
@@ -118,14 +119,140 @@ describe("prepareTextLayout", () => {
   });
 
   it("한글 텍스트도 띄어쓰기 기준 줄바꿈", () => {
-    // "안녕하세요 반갑습니다 좋은하루" = 16자
     const text = "안녕하세요 반갑습니다 좋은하루";
     const result = prepareTextLayout(text, baseParams, cache);
     expect(result.lines).toBeGreaterThanOrEqual(1);
-    // 줄바꿈이 있다면 공백 위치에서
     for (const br of result.lineBreaks) {
       const nearby = text[br] === " " || text[br - 1] === " ";
       expect(nearby).toBe(true);
     }
+  });
+
+  it("containerWidth가 0 이하면 1줄 반환", () => {
+    const narrow = { ...baseParams, containerWidth: 0 };
+    const result = prepareTextLayout("hello", narrow, cache);
+    expect(result.lines).toBe(1);
+  });
+});
+
+describe("prepareMarkdownLayout", () => {
+  let cache: MeasureCache;
+
+  beforeEach(() => {
+    cache = createCache();
+  });
+
+  it("일반 텍스트 마크다운 처리", () => {
+    const result = prepareMarkdownLayout("hello world", baseParams, cache);
+    expect(result.lines).toBeGreaterThanOrEqual(1);
+    expect(result.height).toBeGreaterThan(0);
+  });
+
+  it("빈 줄은 단락 간격 추가", () => {
+    const withGap = prepareMarkdownLayout("hello\n\nworld", baseParams, cache);
+    const without = prepareMarkdownLayout("hello\nworld", baseParams, cache);
+    expect(withGap.height).toBeGreaterThan(without.height);
+  });
+
+  it("헤딩 파싱", () => {
+    const result = prepareMarkdownLayout("## 제목입니다", baseParams, cache);
+    expect(result.lines).toBeGreaterThanOrEqual(1);
+    expect(result.height).toBeGreaterThan(0);
+  });
+
+  it("볼드 마크다운 기호 제거", () => {
+    const result = prepareMarkdownLayout("**볼드 텍스트** 일반", baseParams, cache);
+    expect(result.lines).toBeGreaterThanOrEqual(1);
+  });
+
+  it("링크 마크다운 기호 제거", () => {
+    const result = prepareMarkdownLayout("[링크](http://example.com) 텍스트", baseParams, cache);
+    expect(result.lines).toBeGreaterThanOrEqual(1);
+  });
+
+  it("인라인 코드 마크다운 기호 제거", () => {
+    const result = prepareMarkdownLayout("코드 `inline` 텍스트", baseParams, cache);
+    expect(result.lines).toBeGreaterThanOrEqual(1);
+  });
+
+  it("빈 마크다운 → 최소 높이", () => {
+    const params = { ...baseParams, paddingY: 24 };
+    const result = prepareMarkdownLayout("", params, cache);
+    expect(result.height).toBeGreaterThanOrEqual(24);
+    expect(result.lines).toBe(0);
+  });
+});
+
+describe("estimateMessageHeight", () => {
+  let cache: MeasureCache;
+
+  beforeEach(() => {
+    cache = createCache();
+  });
+
+  it("사용자 메시지 높이 계산", () => {
+    const msg: ChatMessage = { id: "1", role: "user", content: "안녕하세요" };
+    const height = estimateMessageHeight(msg, 400, cache);
+    expect(height).toBeGreaterThan(0);
+  });
+
+  it("어시스턴트 메시지 높이 계산 (마크다운)", () => {
+    const msg: ChatMessage = { id: "1", role: "assistant", content: "**추천** 결과입니다" };
+    const height = estimateMessageHeight(msg, 400, cache);
+    expect(height).toBeGreaterThan(0);
+  });
+
+  it("카드 포함 메시지는 카드 높이 추가", () => {
+    const withCards: ChatMessage = {
+      id: "1", role: "assistant", content: "결과",
+      results: [
+        { id: "r1", title: "t", description: "d", url: "u", genres: [], platform: "", source: "", similarity: 0.5 },
+        { id: "r2", title: "t2", description: "d", url: "u", genres: [], platform: "", source: "", similarity: 0.4 },
+      ],
+    };
+    const without: ChatMessage = { id: "2", role: "assistant", content: "결과" };
+    const h1 = estimateMessageHeight(withCards, 600, cache);
+    const h2 = estimateMessageHeight(without, 600, cache);
+    expect(h1).toBeGreaterThan(h2);
+  });
+
+  it("sm 이상 폭에서 카드 2열", () => {
+    const msg: ChatMessage = {
+      id: "1", role: "assistant", content: "결과",
+      results: [
+        { id: "r1", title: "t", description: "d", url: "u", genres: [], platform: "", source: "", similarity: 0.5 },
+        { id: "r2", title: "t2", description: "d", url: "u", genres: [], platform: "", source: "", similarity: 0.4 },
+      ],
+    };
+    const wide = estimateMessageHeight(msg, 600, cache); // 2열
+    const narrow = estimateMessageHeight(msg, 400, cache); // 1열
+    expect(narrow).toBeGreaterThan(wide);
+  });
+
+  it("장르 버튼 포함 시 높이 추가", () => {
+    const withGenres: ChatMessage = {
+      id: "1", role: "assistant", content: "장르 선택",
+      genreOptions: ["액션", "코미디", "공포", "스릴러", "드라마"],
+    };
+    const without: ChatMessage = { id: "2", role: "assistant", content: "장르 선택" };
+    const h1 = estimateMessageHeight(withGenres, 400, cache);
+    const h2 = estimateMessageHeight(without, 400, cache);
+    expect(h1).toBeGreaterThan(h2);
+  });
+
+  it("최소 높이 40px 보장", () => {
+    const msg: ChatMessage = { id: "1", role: "user", content: "" };
+    const height = estimateMessageHeight(msg, 400, cache);
+    expect(height).toBeGreaterThanOrEqual(40);
+  });
+
+  it("사용자 메시지는 80% 폭 적용", () => {
+    const longText = "이것은 매우 긴 텍스트입니다 ".repeat(10);
+    const user: ChatMessage = { id: "1", role: "user", content: longText };
+    const assistant: ChatMessage = { id: "2", role: "assistant", content: longText };
+    const hUser = estimateMessageHeight(user, 600, cache);
+    const hAssistant = estimateMessageHeight(assistant, 600, cache);
+    // 사용자 메시지는 폭이 좁으니 더 높아야 함
+    expect(hUser).toBeGreaterThanOrEqual(hAssistant);
   });
 });
