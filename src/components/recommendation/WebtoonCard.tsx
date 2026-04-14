@@ -75,7 +75,7 @@ export function WebtoonCard({
           ))}
         </Group>
 
-        <Text size="xs" c="dimmed" lineClamp={3}>
+        <Text size="xs" c="gray.6" lineClamp={3}>
           {webtoon.description}
         </Text>
 

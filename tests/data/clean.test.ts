@@ -4,23 +4,23 @@ import { cleanWikiWebtoons, mergeAll, cleanKakaoCSV, cleanNaverCSV } from "@/cor
 describe("cleanWikiWebtoons", () => {
   it("50자 미만 설명은 필터링", () => {
     const result = cleanWikiWebtoons([
-      { pageid: 1, title: "짧은 웹툰", extract: "너무 짧음", url: "url1", categories: [] },
-      { pageid: 2, title: "긴 웹툰", extract: "a".repeat(60), url: "url2", categories: [] },
+      { pageid: 1, title: "짧은 웹툰", extract: "너무 짧음", url: "url1", categories: [], source: "wikipedia" as const },
+      { pageid: 2, title: "긴 웹툰", extract: "a".repeat(60), url: "url2", categories: [], source: "wikipedia" as const },
     ]);
     expect(result).toHaveLength(1);
     expect(result[0].title).toBe("긴 웹툰");
   });
 
   it("중복 pageid 제거", () => {
-    const raw = { pageid: 1, title: "웹툰", extract: "a".repeat(60), url: "url", categories: [] };
+    const raw = { pageid: 1, title: "웹툰", extract: "a".repeat(60), url: "url", categories: [], source: "wikipedia" as const };
     const result = cleanWikiWebtoons([raw, raw]);
     expect(result).toHaveLength(1);
   });
 
   it("제목에서 (만화), (웹툰) 접미사 제거", () => {
     const result = cleanWikiWebtoons([
-      { pageid: 1, title: "작품명 (만화)", extract: "a".repeat(60), url: "url", categories: [] },
-      { pageid: 2, title: "작품명2 (웹툰)", extract: "a".repeat(60), url: "url2", categories: [] },
+      { pageid: 1, title: "작품명 (만화)", extract: "a".repeat(60), url: "url", categories: [], source: "wikipedia" as const },
+      { pageid: 2, title: "작품명2 (웹툰)", extract: "a".repeat(60), url: "url2", categories: [], source: "wikipedia" as const },
     ]);
     expect(result[0].title).toBe("작품명");
     expect(result[1].title).toBe("작품명2");
@@ -33,6 +33,7 @@ describe("cleanWikiWebtoons", () => {
       extract: "a".repeat(60),
       url: "url",
       categories: ["분류:코미디 웹 만화", "분류:네이버 웹툰", "분류:대한민국의 만화"],
+      source: "wikipedia" as const,
     }]);
     expect(result[0].genres).toContain("코미디 웹 만화");
     expect(result[0].genres).not.toContain("네이버 웹툰");
@@ -45,6 +46,7 @@ describe("cleanWikiWebtoons", () => {
       extract: "a".repeat(60),
       url: "url",
       categories: ["분류:네이버 웹툰"],
+      source: "wikipedia" as const,
     }]);
     expect(result[0].platform).toBe("naver");
   });
@@ -56,6 +58,7 @@ describe("cleanWikiWebtoons", () => {
       extract: "a".repeat(60),
       url: "url",
       categories: [],
+      source: "wikipedia" as const,
     }]);
     expect(result[0].id).toBe("wiki-123");
   });

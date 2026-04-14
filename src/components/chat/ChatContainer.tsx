@@ -399,7 +399,7 @@ export function ChatContainer({ media = "webtoon" }: { media?: MediaType }) {
       <Stack h="100%" gap={0}>
         <Stack align="center" py="md" gap={4}>
           <Title order={3}>{config.title}</Title>
-          <Text size="sm" c="dimmed">
+          <Text size="sm" c="gray.6">
             {config.subtitle}
           </Text>
         </Stack>
@@ -425,9 +425,9 @@ export function ChatContainer({ media = "webtoon" }: { media?: MediaType }) {
         {genreConfirmed && messages.length === 0 && !loading && (
           <Center flex={1}>
             <Stack align="center" gap="xs">
-              <Text size="lg" c="dimmed">검색 예시</Text>
+              <Text size="lg" c="gray.6">검색 예시</Text>
               {config.examples.map((ex) => (
-                <Text key={ex} size="sm" c="dimmed">{ex}</Text>
+                <Text key={ex} size="sm" c="gray.6">{ex}</Text>
               ))}
             </Stack>
           </Center>

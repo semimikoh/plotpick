@@ -29,7 +29,7 @@ export const GenreSelector = memo(function GenreSelector({
       <Stack align="center" gap="lg" maw={400}>
         <Stack align="center" gap={4}>
           <Text size="lg" fw={600}>장르를 먼저 선택해 주세요</Text>
-          <Text size="sm" c="dimmed">
+          <Text size="sm" c="gray.6">
             기억이 안 나면 "모르겠다"를 선택해도 됩니다
           </Text>
         </Stack>
