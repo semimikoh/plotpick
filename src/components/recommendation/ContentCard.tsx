@@ -6,6 +6,7 @@ import {
   Anchor,
   Stack,
   Progress,
+  Image,
 } from "@mantine/core";
 import type { ContentResult } from "@/core/types/search";
 
@@ -46,53 +47,66 @@ export function ContentCard({
       aria-selected={selected}
       onKeyDown={onSelect ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(item); } } : undefined}
     >
-      <Stack gap="xs">
-        <Group justify="space-between" align="flex-start">
-          <Text size="sm" fw={600} style={{ flex: 1 }}>
-            {item.title}
-          </Text>
-          <Badge size="xs" variant="light" color={color}>
-            {score}%
-          </Badge>
-        </Group>
-
-        <Progress
-          value={item.similarity * 100}
-          color={color}
-          size="xs"
-          radius="xl"
-          aria-label={`유사도 ${score}%`}
-        />
-
-        <Group gap="xs">
-          {item.platform && (
-            <Badge size="xs" variant="outline">
-              {item.platform}
-            </Badge>
-          )}
-          {item.genres.map((g) => (
-            <Badge key={g} size="xs" variant="dot">
-              {g}
-            </Badge>
-          ))}
-        </Group>
-
-        <Text size="xs" c="gray.6" lineClamp={3}>
-          {item.description}
-        </Text>
-
-        {item.url.startsWith("http") && (
-          <Anchor
-            href={item.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            size="xs"
-            onClick={(e) => e.stopPropagation()}
-          >
-            상세 정보
-          </Anchor>
+      <Group gap="sm" align="flex-start" wrap="nowrap">
+        {item.poster_url && (
+          <Image
+            src={item.poster_url}
+            alt={item.title}
+            w={60}
+            h={90}
+            radius="sm"
+            fit="cover"
+            style={{ flexShrink: 0 }}
+          />
         )}
-      </Stack>
+        <Stack gap="xs" style={{ flex: 1, minWidth: 0 }}>
+          <Group justify="space-between" align="flex-start">
+            <Text size="sm" fw={600} style={{ flex: 1 }}>
+              {item.title}
+            </Text>
+            <Badge size="xs" variant="light" color={color}>
+              {score}%
+            </Badge>
+          </Group>
+
+          <Progress
+            value={item.similarity * 100}
+            color={color}
+            size="xs"
+            radius="xl"
+            aria-label={`유사도 ${score}%`}
+          />
+
+          <Group gap="xs">
+            {item.platform && (
+              <Badge size="xs" variant="outline">
+                {item.platform}
+              </Badge>
+            )}
+            {item.genres.map((g) => (
+              <Badge key={g} size="xs" variant="dot">
+                {g}
+              </Badge>
+            ))}
+          </Group>
+
+          <Text size="xs" c="gray.6" lineClamp={3}>
+            {item.description}
+          </Text>
+
+          {item.url.startsWith("http") && (
+            <Anchor
+              href={item.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              size="xs"
+              onClick={(e) => e.stopPropagation()}
+            >
+              상세 정보
+            </Anchor>
+          )}
+        </Stack>
+      </Group>
     </Card>
   );
 }
